@@ -1,0 +1,570 @@
+<title>Informe Clima Invernadero UCC</title>
+<meta name="description" content="Informe técnico y funcional de la aplicación de monitoreo climático del invernadero de la Universidad Católica de Cuenca, sede Macas.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bitter:wght@500;600;700&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --ground: #f3f6f2;
+    --paper: #ffffff;
+    --ink: #1c2921;
+    --ink-soft: #3f4d45;
+    --muted: #65746b;
+    --rule: #dde5df;
+    --rule-strong: #c6d2ca;
+    --green: #2f7d4a;
+    --green-wash: #e6f2e9;
+    --blue: #2467b8;
+    --blue-wash: #e7f0fb;
+    --amber: #8a6200;
+    --amber-wash: #fcf3dc;
+    --red: #b83a2f;
+    --red-wash: #fbe9e7;
+    --code-bg: #eef3ef;
+    --serif: 'Bitter', Georgia, 'Times New Roman', serif;
+    --sans: 'Source Sans 3', 'Segoe UI', system-ui, sans-serif;
+    --mono: 'IBM Plex Mono', ui-monospace, Consolas, monospace;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #111713;
+      --paper: #182019;
+      --ink: #e2eae4;
+      --ink-soft: #c2cdc5;
+      --muted: #93a39a;
+      --rule: #29342c;
+      --rule-strong: #384639;
+      --green: #74c291;
+      --green-wash: #1d3325;
+      --blue: #82b4ee;
+      --blue-wash: #1a2a3d;
+      --amber: #e6bd57;
+      --amber-wash: #332a12;
+      --red: #f08a7f;
+      --red-wash: #3a1f1c;
+      --code-bg: #1f2a22;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #111713;
+    --paper: #182019;
+    --ink: #e2eae4;
+    --ink-soft: #c2cdc5;
+    --muted: #93a39a;
+    --rule: #29342c;
+    --rule-strong: #384639;
+    --green: #74c291;
+    --green-wash: #1d3325;
+    --blue: #82b4ee;
+    --blue-wash: #1a2a3d;
+    --amber: #e6bd57;
+    --amber-wash: #332a12;
+    --red: #f08a7f;
+    --red-wash: #3a1f1c;
+    --code-bg: #1f2a22;
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 17px;
+    line-height: 1.62;
+    padding-inline: 20px;
+    padding-block: 36px 72px;
+  }
+  .wrap { max-width: 1120px; margin: 0 auto; display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 48px; align-items: start; }
+  @media (max-width: 960px) { .wrap { grid-template-columns: 1fr; gap: 24px; } .toc { display: none; } }
+
+  /* Índice */
+  .toc { position: sticky; top: 28px; font-size: 14px; }
+  .toc p { font-family: var(--mono); font-size: 11.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0 0 10px; }
+  .toc ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; counter-reset: t; }
+  .toc li { counter-increment: t; }
+  .toc a { display: grid; grid-template-columns: 26px 1fr; padding: 5px 8px; border-radius: 6px; color: var(--ink-soft); text-decoration: none; }
+  .toc a::before { content: counter(t); font-family: var(--mono); color: var(--muted); font-size: 12px; padding-top: 2px; }
+  .toc a:hover { background: var(--green-wash); color: var(--green); }
+  a:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
+
+  main { min-width: 0; }
+  .sheet { background: var(--paper); border: 1px solid var(--rule); border-radius: 4px; padding-inline: clamp(20px, 5vw, 64px); padding-block: 48px 56px; }
+
+  /* Portada */
+  .cover { border-bottom: 3px double var(--rule-strong); padding-bottom: 32px; margin-bottom: 8px; }
+  .eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: .09em; text-transform: uppercase; color: var(--green); margin: 0 0 14px; }
+  h1 { font-family: var(--serif); font-weight: 700; font-size: clamp(30px, 4.6vw, 44px); line-height: 1.12; letter-spacing: -.01em; margin: 0 0 12px; text-wrap: balance; }
+  .lede { font-size: 19px; color: var(--ink-soft); max-width: 62ch; margin: 0 0 28px; }
+  .meta { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 0; border-top: 1px solid var(--rule); }
+  .meta div { padding: 10px 14px 10px 0; border-bottom: 1px solid var(--rule); }
+  .meta dt { font-family: var(--mono); font-size: 11px; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); }
+  .meta dd { margin: 2px 0 0; font-weight: 600; }
+
+  /* Secciones */
+  section { padding-top: 40px; scroll-margin-top: 20px; }
+  h2 { font-family: var(--serif); font-weight: 600; font-size: 26px; line-height: 1.25; margin: 0 0 14px; display: flex; gap: 14px; align-items: baseline; text-wrap: balance; }
+  h2 .n { font-family: var(--mono); font-size: 14px; font-weight: 500; color: var(--green); min-width: 26px; }
+  h3 { font-family: var(--serif); font-weight: 600; font-size: 19px; margin: 28px 0 8px; }
+  p, ul, ol { max-width: 68ch; }
+  p { margin: 0 0 14px; }
+  ul, ol { padding-left: 22px; margin: 0 0 16px; }
+  li { margin-bottom: 5px; }
+  li::marker { color: var(--green); }
+  strong { font-weight: 700; }
+  code, .mono { font-family: var(--mono); font-size: .86em; }
+  code { background: var(--code-bg); padding: 1px 5px; border-radius: 3px; }
+
+  /* Flujo */
+  .flow { list-style: none; padding: 0; margin: 20px 0 8px; max-width: none; display: grid; grid-template-columns: repeat(5, 1fr); border: 1px solid var(--rule-strong); border-radius: 4px; overflow: hidden; }
+  .flow li { margin: 0; padding: 14px 14px 16px; border-right: 1px solid var(--rule); position: relative; }
+  .flow li:last-child { border-right: 0; }
+  .flow b { display: block; font-family: var(--mono); font-size: 11.5px; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; color: var(--green); }
+  .flow span { display: block; font-size: 14.5px; color: var(--ink-soft); line-height: 1.4; margin-top: 4px; }
+  @media (max-width: 720px) { .flow { grid-template-columns: 1fr; } .flow li { border-right: 0; border-bottom: 1px solid var(--rule); } .flow li:last-child { border-bottom: 0; } }
+
+  .scope { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 18px 0; }
+  .scope div { padding: 16px 18px; border-radius: 4px; }
+  .scope h4 { margin: 0 0 8px; font-size: 15px; font-family: var(--sans); font-weight: 700; }
+  .scope ul { margin: 0; font-size: 15.5px; }
+  .yes { background: var(--green-wash); }
+  .yes h4 { color: var(--green); }
+  .no { background: var(--red-wash); }
+  .no h4 { color: var(--red); }
+  @media (max-width: 640px) { .scope { grid-template-columns: 1fr; } }
+
+  /* Tablas */
+  .table { overflow-x: auto; margin: 14px 0 20px; border: 1px solid var(--rule); border-radius: 4px; }
+  table { width: 100%; border-collapse: collapse; font-size: 15px; }
+  th { text-align: left; font-family: var(--mono); font-size: 11.5px; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); background: var(--code-bg); padding: 9px 12px; border-bottom: 1px solid var(--rule-strong); white-space: nowrap; }
+  td { padding: 9px 12px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  tr:last-child td { border-bottom: 0; }
+  td.num { font-variant-numeric: tabular-nums; font-family: var(--mono); font-size: 14px; white-space: nowrap; }
+  td.k { font-weight: 600; white-space: nowrap; }
+  .pill { display: inline-block; font-size: 12.5px; font-weight: 600; padding: 1px 8px; border-radius: 99px; white-space: nowrap; }
+  .pill.on { background: var(--green-wash); color: var(--green); }
+  .pill.off { background: var(--code-bg); color: var(--muted); }
+  .pill.warn { background: var(--amber-wash); color: var(--amber); }
+  .pill.bad { background: var(--red-wash); color: var(--red); }
+
+  /* Fórmulas */
+  .formula { font-family: var(--mono); font-size: 15px; background: var(--code-bg); border-left: 3px solid var(--green); padding: 12px 16px; margin: 10px 0 16px; max-width: 68ch; overflow-x: auto; white-space: nowrap; }
+
+  /* Módulos */
+  .modules { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; border-top: 1px solid var(--rule); margin-top: 14px; }
+  .module { padding: 18px 20px 18px 0; border-bottom: 1px solid var(--rule); }
+  .module:nth-child(odd) { border-right: 1px solid var(--rule); }
+  .module:nth-child(even) { padding-left: 20px; padding-right: 0; }
+  .module h3 { margin: 0 0 4px; font-size: 17.5px; }
+  .module .route { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+  .module ul { font-size: 15.5px; margin: 8px 0 0; }
+  @media (max-width: 720px) { .modules { grid-template-columns: 1fr; } .module, .module:nth-child(even) { padding-inline: 0; border-right: 0; } }
+
+  .note { font-size: 15.5px; padding: 12px 16px; border-radius: 4px; max-width: 68ch; margin: 12px 0 18px; }
+  .note.info { background: var(--blue-wash); color: var(--ink); }
+  .note.info b { color: var(--blue); }
+  .note.warn { background: var(--amber-wash); }
+  .note.warn b { color: var(--amber); }
+
+  pre { font-family: var(--mono); font-size: 13.5px; line-height: 1.55; background: var(--code-bg); padding: 16px 18px; border-radius: 4px; overflow-x: auto; margin: 12px 0 18px; }
+
+  .checks { list-style: none; padding: 0; }
+  .checks li { display: grid; grid-template-columns: 92px 1fr; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--rule); margin: 0; }
+  .checks li:last-child { border-bottom: 0; }
+
+  footer { margin-top: 48px; padding-top: 18px; border-top: 3px double var(--rule-strong); font-size: 14px; color: var(--muted); display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  @media (max-width: 480px) { body { font-size: 16px; padding-inline: 12px; } .sheet { padding-block: 32px 40px; } h2 { font-size: 22px; } }
+  @media print { body { background: #fff; padding: 0; } .toc { display: none; } .wrap { display: block; } .sheet { border: 0; } }
+</style>
+
+<div class="wrap">
+  <nav class="toc" aria-label="Índice">
+    <p>Contenido</p>
+    <ol>
+      <li><a href="#resumen">Resumen</a></li>
+      <li><a href="#alcance">Objetivo y alcance</a></li>
+      <li><a href="#arquitectura">Arquitectura</a></li>
+      <li><a href="#datos">Base de datos</a></li>
+      <li><a href="#variables">Variables y validación</a></li>
+      <li><a href="#modulos">Módulos</a></li>
+      <li><a href="#calculos">Cálculos</a></li>
+      <li><a href="#alertas">Alertas</a></li>
+      <li><a href="#reportes">Reportes e importación</a></li>
+      <li><a href="#demo">Datos de demostración</a></li>
+      <li><a href="#pruebas">Pruebas</a></li>
+      <li><a href="#uso">Instalación y uso</a></li>
+      <li><a href="#limitaciones">Limitaciones</a></li>
+    </ol>
+  </nav>
+
+  <main>
+    <article class="sheet">
+      <header class="cover">
+        <p class="eyebrow">Informe técnico y funcional · Versión 1.0</p>
+        <h1>Clima Invernadero UCC: monitoreo climático agrícola</h1>
+        <p class="lede">Descripción completa de la aplicación que registra, almacena, analiza y grafica los datos climáticos tomados a mano en el invernadero universitario.</p>
+        <dl class="meta">
+          <div><dt>Institución</dt><dd>Universidad Católica de Cuenca</dd></div>
+          <div><dt>Sede</dt><dd>Macas, Morona Santiago</dd></div>
+          <div><dt>Fecha del informe</dt><dd>15 de septiembre de 2026</dd></div>
+          <div><dt>Plataformas</dt><dd>Web · PWA Android · APK</dd></div>
+        </dl>
+      </header>
+
+      <section id="resumen">
+        <h2><span class="n">1</span>Resumen</h2>
+        <p><strong>Clima Invernadero UCC</strong> convierte las mediciones tomadas a mano (temperatura, humedad relativa y otras variables) en indicadores, gráficos interactivos, interpretaciones escritas y reportes listos para trabajos universitarios e investigaciones. Está pensada para estudiantes, docentes, investigadores y productores.</p>
+        <p>La primera versión funciona completa: 9 pantallas, base de datos local, importación desde Excel y CSV, reportes en PDF, Excel y CSV, y un conjunto de datos de demostración separado de los datos reales. El código tiene unas 5.100 líneas de TypeScript y 390 de estilos.</p>
+        <ol class="flow" aria-label="Flujo de la aplicación">
+          <li><b>Registrar</b><span>Formulario manual o importación de hojas de cálculo</span></li>
+          <li><b>Almacenar</b><span>Base de datos en el dispositivo, sin internet</span></li>
+          <li><b>Calcular</b><span>Promedios, extremos, amplitud, correlación</span></li>
+          <li><b>Visualizar</b><span>Dashboard, gráficos y análisis escrito</span></li>
+          <li><b>Reportar</b><span>PDF universitario, Excel y CSV</span></li>
+        </ol>
+      </section>
+
+      <section id="alcance">
+        <h2><span class="n">2</span>Objetivo y alcance</h2>
+        <p>La aplicación es una herramienta de <strong>monitoreo y análisis climatológico</strong>. No es un sistema de control del invernadero.</p>
+        <div class="scope">
+          <div class="yes">
+            <h4>Hace</h4>
+            <ul>
+              <li>Registrar datos por fecha y hora</li>
+              <li>Guardar el historial</li>
+              <li>Calcular indicadores automáticamente</li>
+              <li>Graficar y comparar periodos</li>
+              <li>Mostrar alertas informativas</li>
+              <li>Generar reportes</li>
+            </ul>
+          </div>
+          <div class="no">
+            <h4>No hace</h4>
+            <ul>
+              <li>Encender ventiladores</li>
+              <li>Activar el riego</li>
+              <li>Controlar sensores</li>
+              <li>Manejar actuadores</li>
+            </ul>
+          </div>
+        </div>
+        <p>El modelo de datos ya contempla conectar sensores IoT en una versión futura sin rehacer la aplicación.</p>
+      </section>
+
+      <section id="arquitectura">
+        <h2><span class="n">3</span>Arquitectura</h2>
+        <p>Es una aplicación web progresiva (PWA): se abre en cualquier navegador, se instala en el celular como una app normal y funciona sin conexión. El mismo código puede empaquetarse como APK para Android.</p>
+        <div class="table">
+          <table>
+            <thead><tr><th>Capa</th><th>Tecnología</th><th>Por qué</th></tr></thead>
+            <tbody>
+              <tr><td class="k">Interfaz</td><td>React 18 + TypeScript + Vite</td><td>Componentes reutilizables y errores detectados antes de ejecutar</td></tr>
+              <tr><td class="k">Instalación</td><td>vite-plugin-pwa (Workbox)</td><td>Instalable en Android y utilizable sin internet</td></tr>
+              <tr><td class="k">Base de datos</td><td>IndexedDB con Dexie</td><td>Persistente en el dispositivo; las pantallas se actualizan solas al guardar</td></tr>
+              <tr><td class="k">Gráficos</td><td>Apache ECharts</td><td>Acercar, alejar, ver valores al tocar, descargar PNG</td></tr>
+              <tr><td class="k">Hojas de cálculo</td><td>SheetJS</td><td>Leer y escribir Excel y CSV</td></tr>
+              <tr><td class="k">PDF</td><td>jsPDF + AutoTable</td><td>Reporte con tablas y gráficos incrustados</td></tr>
+              <tr><td class="k">APK (opcional)</td><td>Capacitor</td><td>Empaqueta la misma app web para Android</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <h3>Organización del código</h3>
+<pre>src/
+  db/          modelo de datos, tablas y datos de demostración
+  lib/         cálculos, validación, alertas, análisis escrito, importador, fechas
+  charts/      definición de los gráficos (pantalla y PDF usan la misma)
+  reports/     generación de PDF, Excel y CSV
+  components/  menú, tarjetas, filtro de periodo, ventanas
+  pages/       las 9 pantallas
+docs/          modelo SQL para servidor futuro y este informe</pre>
+      </section>
+
+      <section id="datos">
+        <h2><span class="n">4</span>Base de datos</h2>
+        <p>Seis tablas principales más una de configuración. Cada registro climático queda ligado a un invernadero, un cultivo (opcional), una fecha, una hora y sus variables.</p>
+        <div class="table">
+          <table>
+            <thead><tr><th>Tabla</th><th>Contenido</th></tr></thead>
+            <tbody>
+              <tr><td class="k"><code>Users</code></td><td>Responsables de registro: nombre, rol (estudiante, docente, investigador, productor), correo</td></tr>
+              <tr><td class="k"><code>Greenhouses</code></td><td>Código, nombre, ubicación, área en m², tipo de cubierta</td></tr>
+              <tr><td class="k"><code>Crops</code></td><td>Cultivo, variedad, fechas de siembra y trasplante, etapa fenológica, invernadero, estado activo</td></tr>
+              <tr><td class="k"><code>ClimateRecords</code></td><td>Fecha, hora, variables climáticas, responsable, método de medición, clima exterior, observaciones y origen del dato</td></tr>
+              <tr><td class="k"><code>ClimateThresholds</code></td><td>Rangos de alerta generales o por cultivo</td></tr>
+              <tr><td class="k"><code>Reports</code></td><td>Historial de reportes generados: periodo, formato, número de registros</td></tr>
+              <tr><td class="k"><code>Settings</code></td><td>Institución, modo de datos, campos opcionales, umbrales de detección</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Cada registro indica su <strong>origen</strong>: <code>manual</code>, <code>importado</code>, <code>demo</code> o <code>sensor</code>. El valor <code>sensor</code> está reservado para la integración IoT. Todas las tablas tienen además el campo <code>isDemo</code>, que mantiene separados los datos simulados de los reales.</p>
+        <p>El archivo <code>docs/base-de-datos.sql</code> contiene el mismo modelo en PostgreSQL, con restricciones de rango y unicidad, para montar un servidor central si más adelante se quieren sincronizar varios dispositivos.</p>
+      </section>
+
+      <section id="variables">
+        <h2><span class="n">5</span>Variables y validación</h2>
+        <p>Temperatura del aire y humedad relativa son obligatorias. Las demás variables se activan o desactivan en Configuración. Los límites de la tabla solo impiden valores físicamente imposibles; no son rangos de alerta.</p>
+        <div class="table">
+          <table>
+            <thead><tr><th>Variable</th><th>Unidad</th><th>Valores aceptados</th><th>Estado inicial</th></tr></thead>
+            <tbody>
+              <tr><td class="k">Temperatura del aire</td><td class="num">°C</td><td class="num">−10 a 60</td><td><span class="pill on">Obligatoria</span></td></tr>
+              <tr><td class="k">Humedad relativa</td><td class="num">%</td><td class="num">0 a 100</td><td><span class="pill on">Obligatoria</span></td></tr>
+              <tr><td class="k">Temperatura del suelo</td><td class="num">°C</td><td class="num">−5 a 50</td><td><span class="pill on">Activa</span></td></tr>
+              <tr><td class="k">Humedad del suelo</td><td class="num">%</td><td class="num">0 a 100</td><td><span class="pill on">Activa</span></td></tr>
+              <tr><td class="k">Luminosidad</td><td class="num">lux</td><td class="num">0 a 200 000</td><td><span class="pill off">Desactivada</span></td></tr>
+              <tr><td class="k">Radiación solar</td><td class="num">W/m²</td><td class="num">0 a 1 500</td><td><span class="pill off">Desactivada</span></td></tr>
+              <tr><td class="k">Velocidad del viento</td><td class="num">m/s</td><td class="num">0 a 60</td><td><span class="pill off">Desactivada</span></td></tr>
+              <tr><td class="k">Precipitación</td><td class="num">mm</td><td class="num">0 a 500</td><td><span class="pill off">Desactivada</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <h3>Reglas del formulario</h3>
+        <ul>
+          <li>Fecha y hora obligatorias y válidas; no se aceptan fechas ni horas futuras.</li>
+          <li>Los valores deben ser numéricos; se acepta punto o coma decimal (<code>22.5</code> o <code>22,5</code>).</li>
+          <li>No se permiten dos registros del mismo invernadero con la misma fecha y hora.</li>
+          <li>Cada error aparece en rojo junto al campo, con una explicación de cómo corregirlo.</li>
+          <li>Mientras se escribe, la app avisa si el valor queda fuera del rango del cultivo.</li>
+        </ul>
+        <p>Información adicional por registro: cultivo, etapa fenológica, responsable, método de medición (termohigrómetro digital, psicrómetro, estación portátil, etc.), estado del clima exterior, observaciones generales y observaciones del cultivo.</p>
+      </section>
+
+      <section id="modulos">
+        <h2><span class="n">6</span>Módulos de la aplicación</h2>
+        <p>En computadora el menú está a la izquierda. En celular aparece abajo con Inicio, Registrar, Historial, Gráficos y «Más» para el resto.</p>
+        <div class="modules">
+          <div class="module">
+            <h3>Dashboard</h3>
+            <span class="route">Inicio</span>
+            <ul>
+              <li>Temperatura y humedad del último registro</li>
+              <li>Promedios, máxima y mínima del día, junto con los extremos históricos</li>
+              <li>Total de registros, última actualización y cultivo monitoreado</li>
+              <li>Gráfico del día, alertas de los últimos 7 días y análisis escrito</li>
+            </ul>
+          </div>
+          <div class="module">
+            <h3>Registrar datos</h3>
+            <span class="route">Registrar</span>
+            <ul>
+              <li>Formulario por secciones: fecha y hora, variables, información adicional</li>
+              <li>«Guardar y registrar otro» para cargar varias horas seguidas</li>
+              <li>Recuerda el invernadero, cultivo y responsable usados la última vez</li>
+            </ul>
+          </div>
+          <div class="module">
+            <h3>Historial</h3>
+            <span class="route">Historial</span>
+            <ul>
+              <li>Tabla con búsqueda, filtro por cultivo y rango de fechas</li>
+              <li>Orden por fecha y paginación de 10, 20, 50 o 100 filas</li>
+              <li>Ver detalles, editar o eliminar (con confirmación)</li>
+              <li>Exportar a Excel o CSV; valores fuera de rango resaltados</li>
+            </ul>
+          </div>
+          <div class="module">
+            <h3>Gráficos</h3>
+            <span class="route">Gráficos</span>
+            <ul>
+              <li>Temperatura y humedad en función de la hora, con promedio, máxima, mínima y rango permitido</li>
+              <li>Comparativos entre variables, días o semanas</li>
+              <li>Promedios diarios, semanales y mensuales; máximos y mínimos</li>
+              <li>Distribución de valores y de registros; correlación con recta de tendencia</li>
+            </ul>
+          </div>
+          <div class="module">
+            <h3>Análisis climático</h3>
+            <span class="route">Análisis</span>
+            <ul>
+              <li>Tabla de indicadores del periodo por variable</li>
+              <li>Interpretación escrita del periodo y de cada día</li>
+              <li>Alertas filtradas por tipo y días con valores extremos</li>
+              <li>Resumen diario, semanal o mensual</li>
+            </ul>
+          </div>
+          <div class="module">
+            <h3>Cultivos</h3>
+            <span class="route">Más → Cultivos</span>
+            <ul>
+              <li>Nombre, variedad, siembra, trasplante, etapa e invernadero</li>
+              <li>Rangos de alerta propios de cada cultivo</li>
+              <li>Plantillas de inicio: tomate, tomate cherry, lechuga, pimiento, pepino, fresa</li>
+            </ul>
+          </div>
+          <div class="module">
+            <h3>Reportes</h3>
+            <span class="route">Más → Reportes</span>
+            <ul>
+              <li>Selección de periodo, invernadero, cultivo y responsable</li>
+              <li>Contenido del PDF configurable por secciones</li>
+              <li>Vista previa de indicadores e historial de reportes generados</li>
+            </ul>
+          </div>
+          <div class="module">
+            <h3>Configuración</h3>
+            <span class="route">Más → Configuración</span>
+            <ul>
+              <li>Modo de datos: reales o de demostración</li>
+              <li>Campos opcionales, rango general de alertas y umbrales de detección</li>
+              <li>Invernaderos y responsables</li>
+              <li>Respaldo y restauración de datos en archivo JSON</li>
+            </ul>
+          </div>
+        </div>
+        <p style="margin-top:16px">A estas se suma <strong>Importar datos</strong>, que se abre desde Registrar o Historial. El filtro de periodo (Hoy, Ayer, 7, 15 o 30 días, semana, mes, personalizado o todo) se comparte entre Gráficos y Análisis.</p>
+      </section>
+
+      <section id="calculos">
+        <h2><span class="n">7</span>Cálculos automáticos</h2>
+        <p>Todos los indicadores se recalculan cada vez que se guarda, edita o importa un registro.</p>
+        <div class="formula">Promedio = suma de todos los valores / número de registros</div>
+        <div class="formula">Amplitud térmica = temperatura máxima − temperatura mínima</div>
+        <div class="formula">Variación entre registros = valor<sub>n</sub> − valor<sub>n−1</sub> &nbsp;(mismo día)</div>
+        <div class="formula">r de Pearson = Σ(x−x̄)(y−ȳ) / √[Σ(x−x̄)² · Σ(y−ȳ)²]</div>
+        <ul>
+          <li><strong>Temperatura:</strong> promedio, máximo y mínimo con fecha y hora, amplitud térmica del periodo y diaria, variación entre registros, desviación estándar.</li>
+          <li><strong>Humedad relativa:</strong> promedio, máxima, mínima y variación diaria.</li>
+          <li><strong>Agrupaciones:</strong> promedio por hora del día, diario, semanal (semana ISO, de lunes a domingo) y mensual; número de registros por día.</li>
+          <li><strong>Precipitación:</strong> se suma en lugar de promediarse.</li>
+          <li><strong>Correlación:</strong> coeficiente r, R² y ecuación de la recta. El texto la clasifica como muy fuerte (≥ 0,8), fuerte (≥ 0,6), moderada (≥ 0,4), débil (≥ 0,2) o nula, y solo la interpreta con 10 pares o más.</li>
+        </ul>
+        <h3>Interpretaciones escritas</h3>
+        <p>La app redacta frases como: «Durante el día 14 de septiembre se registró una temperatura promedio de…, con una máxima de… y una mínima de…». Cada cifra sale de los registros guardados. Si hay un solo registro en el día, o menos de 10 pares para una correlación, la app lo indica en lugar de sacar conclusiones. Nunca completa ni estima datos faltantes.</p>
+      </section>
+
+      <section id="alertas">
+        <h2><span class="n">8</span>Alertas informativas</h2>
+        <p>Las alertas señalan valores fuera de rango; no accionan ningún equipo. Se usa el rango del cultivo asociado al registro y, si no existe, el rango general.</p>
+        <div class="table">
+          <table>
+            <thead><tr><th>Nivel</th><th>Cuándo aparece</th></tr></thead>
+            <tbody>
+              <tr><td><span class="pill warn">Advertencia</span></td><td>Temperatura, humedad relativa o variables de suelo fuera del rango configurado</td></tr>
+              <tr><td><span class="pill bad">Extremo</span></td><td>El valor supera el límite por 3 °C o más en temperatura, o por 10 % o más en humedad relativa</td></tr>
+              <tr><td><span class="pill warn">Cambio brusco</span></td><td>Diferencia entre registros consecutivos del mismo día ≥ 5 °C o ≥ 20 % de HR (ajustable)</td></tr>
+              <tr><td><span class="pill off">Falta de datos</span></td><td>Más de 24 horas sin registros (ajustable)</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <h3>Rangos iniciales</h3>
+        <div class="table">
+          <table>
+            <thead><tr><th>Aplicación</th><th>Temperatura</th><th>Humedad relativa</th></tr></thead>
+            <tbody>
+              <tr><td class="k">Rango general del invernadero</td><td class="num">15 – 30 °C</td><td class="num">50 – 90 %</td></tr>
+              <tr><td class="k">Tomate</td><td class="num">15 – 30 °C</td><td class="num">60 – 85 %</td></tr>
+              <tr><td class="k">Tomate cherry</td><td class="num">16 – 30 °C</td><td class="num">60 – 85 %</td></tr>
+              <tr><td class="k">Lechuga</td><td class="num">10 – 24 °C</td><td class="num">60 – 80 %</td></tr>
+              <tr><td class="k">Pimiento</td><td class="num">16 – 30 °C</td><td class="num">60 – 80 %</td></tr>
+              <tr><td class="k">Pepino</td><td class="num">18 – 32 °C</td><td class="num">70 – 90 %</td></tr>
+              <tr><td class="k">Fresa</td><td class="num">10 – 26 °C</td><td class="num">60 – 80 %</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="note warn"><b>Importante:</b> los rangos por cultivo son valores referenciales de partida. Conviene ajustarlos según la variedad y la bibliografía agronómica del curso.</p>
+      </section>
+
+      <section id="reportes">
+        <h2><span class="n">9</span>Reportes e importación</h2>
+        <h3>Reporte PDF</h3>
+        <p>Se titula «Reporte de monitoreo climático del invernadero» y tiene formato A4 con encabezado institucional, numeración de páginas y pie con la universidad. Contiene:</p>
+        <ol>
+          <li>Ficha: universidad, sede, invernadero, cultivo, periodo, responsable, fecha de generación, número de registros</li>
+          <li>Resumen climático por variable</li>
+          <li>Análisis e interpretación</li>
+          <li>Gráficos: temperatura, humedad, promedios diarios, máximos y mínimos, temperatura contra humedad, correlación y suelo</li>
+          <li>Resumen diario</li>
+          <li>Alertas</li>
+          <li>Información del cultivo</li>
+          <li>Observaciones</li>
+          <li>Anexo con la tabla completa de registros</li>
+        </ol>
+        <p><strong>Excel</strong> genera un libro con las hojas Información, Resumen, Resumen diario, Análisis y Registros. <strong>CSV</strong> exporta la tabla de registros en UTF-8.</p>
+
+        <h3>Importación desde Excel o CSV</h3>
+        <p>Pensada para cargar datos que ya están en hojas de cálculo. Tiene tres pasos: elegir el archivo, revisar columnas y filas, e importar.</p>
+        <ul>
+          <li>Reconoce las columnas por su nombre, con o sin tildes y unidades: <span class="mono">Fecha | Hora | Temperatura | Humedad | Temperatura suelo | Humedad suelo | Observaciones</span>…</li>
+          <li>Fechas: <code>14/09/2026</code>, <code>2026-09-14</code>, fechas nativas de Excel o fecha y hora en la misma celda.</li>
+          <li>Horas: <code>08:00</code>, <code>08h00</code>, <code>8:00 p. m.</code> u horas de Excel.</li>
+          <li>Separador <code>;</code> o <code>,</code> y coma o punto decimal.</li>
+          <li>Vista previa que marca cada fila como válida, con error (y el motivo) o duplicada. Solo se importan las válidas.</li>
+          <li>Desde la misma pantalla se descargan plantillas de ejemplo en Excel y CSV.</li>
+        </ul>
+      </section>
+
+      <section id="demo">
+        <h2><span class="n">10</span>Datos de demostración</h2>
+        <p>Sirven para mostrar la aplicación antes de tener datos reales. Se activan en Configuración o desde el dashboard vacío.</p>
+        <ul>
+          <li>60 días simulados con mediciones cada 2 horas entre las 06:00 y las 18:00. Algunos días y horas faltan a propósito, para que se vean las alertas de falta de datos.</li>
+          <li>Curva diaria con la mínima al amanecer y la máxima al mediodía, tomando como referencia el clima de Macas, con días soleados sobre 30 °C y descensos repentinos ocasionales.</li>
+          <li>Invernadero <code>DEMO-01</code> y dos cultivos: tomate riñón y lechuga.</li>
+        </ul>
+        <p class="note info"><b>Separación garantizada:</b> los datos de demostración nunca se muestran junto con los reales, ni en gráficos ni en reportes. Mientras están activos aparece un aviso fijo, y los PDF llevan la marca de agua «DEMOSTRACIÓN». Se pueden regenerar o eliminar sin tocar los datos reales.</p>
+      </section>
+
+      <section id="pruebas">
+        <h2><span class="n">11</span>Pruebas realizadas</h2>
+        <ul class="checks">
+          <li><span class="pill on">Correcto</span><span>Compilación de producción sin errores de tipos; se genera la versión instalable con 18 archivos en caché sin conexión.</span></li>
+          <li><span class="pill on">Correcto</span><span>Las 9 pantallas cargan con datos, sin errores de ejecución.</span></li>
+          <li><span class="pill on">Correcto</span><span>Las 7 pestañas de gráficos dibujan con 342 registros de demostración.</span></li>
+          <li><span class="pill on">Correcto</span><span>Importador: con un CSV de prueba aceptó la fila válida y rechazó humedad de 120 %, temperatura «abc» y una fila duplicada, cada una con su motivo.</span></li>
+          <li><span class="pill on">Correcto</span><span>Vista de celular (375 px): menú inferior visible, sin desplazamiento horizontal.</span></li>
+          <li><span class="pill warn">Corregido</span><span>Se creaba un invernadero duplicado al abrir la app por primera vez.</span></li>
+          <li><span class="pill warn">Corregido</span><span>El PDF pesaba 56 MB; ahora pesa 2,1 MB (18 páginas, generado en 1,7 s).</span></li>
+          <li><span class="pill warn">Corregido</span><span>En celular, la barra de guardar tapaba campos del formulario.</span></li>
+        </ul>
+      </section>
+
+      <section id="uso">
+        <h2><span class="n">12</span>Instalación y uso</h2>
+        <h3>En la computadora</h3>
+<pre>cd clima-invernadero-ucc
+npm install
+npm run dev       # abre la app en http://localhost:5173
+npm run build     # genera la versión final en la carpeta dist/</pre>
+        <h3>En el celular (PWA)</h3>
+        <p>Publicar la carpeta <code>dist/</code> en un hosting con HTTPS (Netlify, Vercel, GitHub Pages o un servidor de la universidad), abrir la dirección en Chrome para Android y elegir <em>Menú → Instalar aplicación</em>.</p>
+        <h3>Como APK</h3>
+        <p>Con Capacitor se empaqueta la misma app y se compila en Android Studio. Los comandos están en el <code>README.md</code> del proyecto.</p>
+        <h3>Primer uso con datos reales</h3>
+        <ol>
+          <li>En Configuración, confirmar el modo «Datos reales» y revisar los datos del invernadero <code>INV-UCC-01</code>.</li>
+          <li>Registrar el cultivo presente en Cultivos y ajustar sus rangos.</li>
+          <li>Importar las hojas de cálculo existentes o empezar a registrar mediciones.</li>
+          <li>Descargar un respaldo de forma periódica.</li>
+        </ol>
+      </section>
+
+      <section id="limitaciones">
+        <h2><span class="n">13</span>Limitaciones y próximos pasos</h2>
+        <h3>Limitaciones actuales</h3>
+        <ul>
+          <li><strong>Datos por dispositivo:</strong> cada celular o computadora guarda su propia base. Para compartir datos entre equipos se usa el respaldo JSON; no hay sincronización automática.</li>
+          <li><strong>Sin inicio de sesión:</strong> los responsables se registran por nombre y no hay control de permisos.</li>
+          <li><strong>Pendiente de revisión visual:</strong> falta revisar página por página el diseño del PDF y confirmar la barra de guardar en un teléfono real.</li>
+          <li><strong>Sin pruebas automatizadas:</strong> la verificación se hizo de forma manual y con scripts en el navegador.</li>
+          <li><strong>Peso de la app:</strong> unos 2,3 MB, que se descargan una sola vez y luego funcionan sin conexión.</li>
+        </ul>
+        <h3>Próximos pasos sugeridos</h3>
+        <ul>
+          <li>Montar un servidor con el modelo SQL incluido para sincronizar dispositivos y agregar usuarios con contraseña.</li>
+          <li>Integrar sensores o estaciones meteorológicas registrando sus lecturas con origen <code>sensor</code>.</li>
+          <li>Validar los rangos por cultivo con los docentes de agronomía.</li>
+          <li>Agregar indicadores agronómicos como el déficit de presión de vapor (DPV) y los grados-día de desarrollo.</li>
+        </ul>
+      </section>
+
+      <footer>
+        <span>Clima Invernadero UCC · Universidad Católica de Cuenca, sede Macas</span>
+        <span class="mono">v1.0 · 15/09/2026</span>
+      </footer>
+    </article>
+  </main>
+</div>

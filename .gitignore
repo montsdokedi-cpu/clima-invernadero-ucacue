@@ -1,0 +1,20 @@
+node_modules/
+dist/
+dist-ssr/
+*.local
+*.zip
+.DS_Store
+.vscode/
+.idea/
+
+# Compilación de Android (se genera en la nube)
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/.idea/
+android/app/src/main/assets/public/
+*.apk
+*.aab
+*.keystore
+*.jks

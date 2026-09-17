@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Clima UCACUE</string>
+    <string name="title_activity_main">Clima UCACUE</string>
+    <string name="package_name">ec.edu.ucacue.climainvernadero</string>
+    <string name="custom_url_scheme">ec.edu.ucacue.climainvernadero</string>
+</resources>
