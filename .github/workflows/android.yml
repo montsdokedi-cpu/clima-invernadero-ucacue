@@ -35,8 +35,11 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Preparar Android SDK
-        uses: android-actions/setup-android@v3
+      # El servidor de GitHub (ubuntu-latest) ya trae el Android SDK con las licencias aceptadas.
+      - name: Comprobar el Android SDK
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          ls "$ANDROID_HOME/platforms" || true
 
       - name: Copiar la app web al proyecto Android
         run: npx cap sync android
