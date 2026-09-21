@@ -10,11 +10,16 @@ export interface Lookup {
   cropById: Map<number, Crop>;
 }
 
-const NUM_KEYS: NumericKey[] = ['airTemp', 'relHumidity', 'soilTemp', 'soilMoisture', 'luminosity', 'solarRadiation', 'windSpeed', 'precipitation', 'outsideTemp', 'outsideHumidity'];
+const NUM_KEYS: NumericKey[] = [
+  'airTemp', 'relHumidity', 'soilTemp', 'soilMoisture', 'luminosity', 'solarRadiation', 'windSpeed', 'precipitation', 'outsideTemp', 'outsideHumidity',
+  'airTemp1', 'relHumidity1', 'airTemp2', 'relHumidity2', 'soilMoisture1', 'soilMoisture2', 'soilMoisture3', 'soilMoisture4',
+];
+const valveText = (v: boolean | null | undefined) => (v === true ? 'ABIERTA' : v === false ? 'CERRADA' : '');
 
 export const RECORD_HEADERS = [
   'Fecha', 'Hora', 'Invernadero', 'Cultivo', 'Etapa fenológica',
   ...NUM_KEYS.map((k) => `${VARIABLES[k].label} (${VARIABLES[k].unit})`),
+  'Electroválvula 1', 'Electroválvula 2', 'Electroválvula 3', 'Electroválvula 4',
   'Origen', 'Sensor', 'Validación', 'Nota de validación',
   'Responsable', 'Método de medición', 'Clima exterior', 'Observaciones', 'Observaciones del cultivo', 'Tipo de dato',
 ];
@@ -25,6 +30,7 @@ export function recordRows(records: ClimateRecord[], lk: Lookup): Cell[][] {
     return [
       fmtDate(r.date), r.time, lk.greenhouseById.get(r.greenhouseId)?.code ?? '', crop ? `${crop.name}${crop.variety ? ` (${crop.variety})` : ''}` : '', r.phenologicalStage ?? '',
       ...NUM_KEYS.map((k) => (isNum(r[k]) ? (r[k] as number) : null)),
+      valveText(r.valve1), valveText(r.valve2), valveText(r.valve3), valveText(r.valve4),
       SOURCE_LABELS[r.source], r.sensorId ?? '', VALIDATION_LABELS[r.validation ?? 'valido'], r.validationNote ?? '',
       r.recordedBy ?? '', r.method ?? '', r.outsideWeather ?? '', r.observations ?? '', r.cropObservations ?? '', r.isDemo ? 'DEMOSTRACIÓN' : 'Real',
     ];

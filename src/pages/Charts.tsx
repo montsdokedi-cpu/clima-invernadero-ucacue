@@ -1,4 +1,9 @@
-import { CalendarRange, ChartColumn, ChartLine, ChartScatter, Droplets, GitCompare, Thermometer, Waves } from 'lucide-react';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { CalendarRange, ChartColumn, ChartLine, ChartScatter, Droplets, GitCompare, ShowerHead, Thermometer, Waves } from 'lucide-react';
+import { sensorLinesOption } from '../charts/parcels';
+import { db } from '../db/db';
+import { toTimestamp } from '../lib/dates';
+import { isNum, SOIL_KEYS } from '../lib/variables';
 import { useMemo, useState, type ReactNode } from 'react';
 import {
   compareDaysOption,
@@ -24,7 +29,7 @@ import { consecutiveChanges, dailySummaries, describeCorrelation, monthlySummari
 import { fmt, fmtHours, variablesWithData, VARIABLES, type NumericKey } from '../lib/variables';
 import { useData } from '../state/DataContext';
 
-type Tab = 'temp' | 'hum' | 'tvh' | 'daily' | 'compare' | 'dist' | 'corr';
+type Tab = 'temp' | 'hum' | 'tvh' | 'daily' | 'compare' | 'dist' | 'corr' | 'system';
 const TABS: { id: Tab; label: string; icon: ReactNode }[] = [
   { id: 'temp', label: '1 · Temperatura', icon: <Thermometer size={16} /> },
   { id: 'hum', label: '2 · Humedad relativa', icon: <Droplets size={16} /> },
@@ -33,7 +38,66 @@ const TABS: { id: Tab; label: string; icon: ReactNode }[] = [
   { id: 'compare', label: '5 · Comparaciones', icon: <GitCompare size={16} /> },
   { id: 'dist', label: '6 · Distribución', icon: <Waves size={16} /> },
   { id: 'corr', label: '7 · Correlación', icon: <ChartScatter size={16} /> },
+  { id: 'system', label: '8 · Parcelas y sensores', icon: <ShowerHead size={16} /> },
 ];
+
+type SystemVar = 'tamb' | 'hamb' | 'suelo';
+
+/** Gráfica del sistema de 4 parcelas: temperatura ambiental, humedad ambiental y humedad del suelo por parcela. */
+function SystemChart({ records, from, to }: { records: ClimateRecord[]; from: string; to: string }) {
+  const { isDemo } = useData();
+  const [v, setV] = useState<SystemVar>('suelo');
+  const [parcel, setParcel] = useState<'todas' | '1' | '2' | '3' | '4'>('1');
+  const [bands, setBands] = useState(true);
+  const fromTs = toTimestamp(from, '00:00');
+  const toTs = toTimestamp(to, '23:59') + 59999;
+  const events = useLiveQuery(
+    () => db.valveEvents.filter((e) => e.isDemo === isDemo && e.start <= toTs && (e.end ?? Date.now()) >= fromTs).toArray(),
+    [isDemo, fromTs, toTs],
+  ) ?? [];
+  const keys: NumericKey[] = v === 'tamb' ? ['airTemp1', 'airTemp2'] : v === 'hamb' ? ['relHumidity1', 'relHumidity2'] : parcel === 'todas' ? [...SOIL_KEYS] : [SOIL_KEYS[Number(parcel) - 1]];
+  const sysRecords = records.filter((r) => keys.some((k) => isNum(r[k])));
+  const option = useMemo(
+    () =>
+      sensorLinesOption(sysRecords, keys, {
+        unit: v === 'tamb' ? '°C' : '%',
+        valveEvents: v === 'suelo' && parcel !== 'todas' && bands ? events.filter((e) => String(e.parcel) === parcel) : [],
+        from: fromTs,
+        to: toTs,
+      }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [sysRecords, keys.join(), v, parcel, bands, events, fromTs, toTs],
+  );
+  const title = v === 'tamb' ? 'Temperatura ambiental · puntos 1 y 2' : v === 'hamb' ? 'Humedad ambiental · puntos 1 y 2' : parcel === 'todas' ? 'Humedad del suelo · las 4 parcelas' : `Humedad del suelo — Parcela ${parcel}`;
+  return (
+    <ChartCard
+      title={title}
+      subtitle={`Eje X: tiempo · eje Y: ${v === 'tamb' ? 'temperatura (°C)' : 'humedad (%)'}${v === 'suelo' && parcel !== 'todas' && bands ? ' · banda azul: electroválvula abierta' : ''}`}
+      option={option}
+      height={400}
+      empty={sysRecords.length === 0}
+      emptyText="No hay lecturas del sistema de parcelas en este periodo. Conecta el ESP32 o importa sus datos."
+      controls={
+        <>
+          <Segmented size="sm" value={v} onChange={setV} options={[{ value: 'tamb', label: 'Temperatura ambiental' }, { value: 'hamb', label: 'Humedad ambiental' }, { value: 'suelo', label: 'Humedad del suelo' }]} />
+          {v === 'suelo' && (
+            <label htmlFor="sys-parcel">
+              Parcela
+              <select id="sys-parcel" value={parcel} onChange={(e) => setParcel(e.target.value as typeof parcel)}>
+                <option value="todas">Todas</option>
+                {[1, 2, 3, 4].map((n) => <option key={n} value={n}>Parcela {n}</option>)}
+              </select>
+            </label>
+          )}
+          {v === 'suelo' && parcel !== 'todas' && (
+            <label className="check" style={{ padding: 0 }}><input id="sys-bands" type="checkbox" checked={bands} onChange={(e) => setBands(e.target.checked)} /> Mostrar riegos</label>
+          )}
+        </>
+      }
+      footer={<span className="small muted">Periodo: usa el filtro superior (Hoy, Últimos 7 días, Últimos 30 días o Personalizado). {sysRecords.length} lecturas.</span>}
+    />
+  );
+}
 
 type CompareMode = 'days' | 'weeks' | 'parts' | 'stages' | 'inout' | 'vars';
 const MIN_CORR = 10;
@@ -117,7 +181,7 @@ function VariableTab({ k, records }: { k: 'airTemp' | 'relHumidity'; records: Cl
 }
 
 export default function Charts() {
-  const { ready, periodRecords, records, thresholds } = useData();
+  const { ready, periodRecords, records, thresholds, resolved } = useData();
   const [tab, setTab] = useState<Tab>('temp');
 
   const [compareMode, setCompareMode] = useState<CompareMode>('days');
@@ -199,6 +263,7 @@ export default function Charts() {
         ))}
       </div>
 
+      {tab === 'system' && <SystemChart records={periodRecords} from={resolved.from} to={resolved.to} />}
       {tab === 'temp' && <VariableTab k="airTemp" records={periodRecords} />}
       {tab === 'hum' && <VariableTab k="relHumidity" records={periodRecords} />}
 

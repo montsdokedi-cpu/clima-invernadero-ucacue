@@ -2,6 +2,7 @@ import { ArrowUpDown, ChevronLeft, ChevronRight, ClipboardPen, Eye, FileSpreadsh
 import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { SourceBadge, ValidationBadge } from '../components/agro';
+import { SystemExportModal } from '../components/SystemExportModal';
 import { ConfirmModal, EmptyState, Modal, PageHeader } from '../components/ui';
 import { db } from '../db/db';
 import { SOURCE_LABELS, VALIDATION_LABELS, type ClimateRecord, type ClimateThreshold, type DataValidation, type RecordSource } from '../db/types';
@@ -37,6 +38,7 @@ export default function History() {
   const [pageSize, setPageSize] = useState(20);
   const [detailId, setDetailId] = useState<number | null>(null);
   const [toDelete, setToDelete] = useState<ClimateRecord | null>(null);
+  const [sysExport, setSysExport] = useState(false);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -88,6 +90,7 @@ export default function History() {
             <Link to="/importar" className="btn btn-secondary"><Upload size={17} /> Importar</Link>
             <button className="btn btn-secondary" onClick={() => exportAs('csv')} disabled={!filtered.length}><FileDown size={17} /> CSV</button>
             <button className="btn btn-secondary" onClick={() => exportAs('xlsx')} disabled={!filtered.length}><FileSpreadsheet size={17} /> Excel</button>
+            <button className="btn btn-primary" onClick={() => setSysExport(true)} disabled={!historyRecords.length}><FileSpreadsheet size={17} /> Excel del sistema de riego</button>
           </>
         }
       />
@@ -150,6 +153,7 @@ export default function History() {
                   <th className="num">Temp. (°C)</th>
                   <th className="num">HR (%)</th>
                   <th className="num">T. suelo</th>
+                  <th title="Humedad del suelo de las parcelas 1–4 y estado de las electroválvulas">Parcelas 1–4</th>
                   <th>Etapa</th>
                   <th>Origen</th>
                   <th>Validación</th>
@@ -167,6 +171,15 @@ export default function History() {
                       <td data-label="Temperatura" className="num"><span className={cellClass(r, 'airTemp', th)}>{fmt(r.airTemp)}</span></td>
                       <td data-label="Humedad relativa" className="num"><span className={cellClass(r, 'relHumidity', th)}>{fmt(r.relHumidity, 0)}</span></td>
                       <td data-label="Temp. suelo" className="num">{fmt(r.soilTemp)}</td>
+                      <td data-label="Parcelas 1–4" className="parcel-cell">
+                        {[1, 2, 3, 4].some((n) => r[`soilMoisture${n}` as 'soilMoisture1'] != null || r[`valve${n}` as 'valve1'] != null)
+                          ? [1, 2, 3, 4].map((n) => {
+                              const s = r[`soilMoisture${n}` as 'soilMoisture1'];
+                              const v = r[`valve${n}` as 'valve1'];
+                              return <span key={n} title={`Parcela ${n}: ${s ?? '—'} % · EV ${v === true ? 'abierta' : v === false ? 'cerrada' : 'sin dato'}`}>{n > 1 ? ' · ' : ''}{s ?? '—'}<i className={`vd ${v ? 'on' : ''}`} /></span>;
+                            })
+                          : <span className="muted">—</span>}
+                      </td>
                       <td data-label="Etapa" className="small">{r.phenologicalStage || '—'}</td>
                       <td data-label="Origen"><SourceBadge source={r.source} />{r.sensorId && <span className="small muted"> {r.sensorId}</span>}</td>
                       <td data-label="Validación"><ValidationBadge value={r.validation ?? 'valido'} note={r.validationNote} /></td>
@@ -182,7 +195,7 @@ export default function History() {
                   );
                 })}
                 {rows.length === 0 && (
-                  <tr><td colSpan={10} style={{ textAlign: 'center', padding: 30 }} className="muted">Ningún registro coincide con los filtros.</td></tr>
+                  <tr><td colSpan={11} style={{ textAlign: 'center', padding: 30 }} className="muted">Ningún registro coincide con los filtros.</td></tr>
                 )}
               </tbody>
             </table>
@@ -229,6 +242,10 @@ export default function History() {
             {(Object.keys(VARIABLES) as NumericKey[]).filter((k) => isNum(detail[k])).map((k) => (
               <div key={k}><dt>{VARIABLES[k].label}</dt><dd>{fmtVar(k, detail[k])}</dd></div>
             ))}
+            {[1, 2, 3, 4].map((n) => {
+              const v = detail[`valve${n}` as 'valve1'];
+              return v === null || v === undefined ? null : <div key={`v${n}`}><dt>Electroválvula {n}</dt><dd>{v ? '🟢 ABIERTA' : '🔴 CERRADA'}</dd></div>;
+            })}
             <div><dt>Etapa fenológica</dt><dd>{detail.phenologicalStage || '—'}</dd></div>
             <div><dt>Responsable</dt><dd>{detail.recordedBy || '—'}</dd></div>
             <div><dt>Método de medición</dt><dd>{detail.method || '—'}</dd></div>
@@ -239,6 +256,8 @@ export default function History() {
           </dl>
         </Modal>
       )}
+
+      {sysExport && <SystemExportModal onClose={() => setSysExport(false)} />}
 
       {toDelete && (
         <ConfirmModal

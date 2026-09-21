@@ -10,7 +10,15 @@ export type NumericKey =
   | 'windSpeed'
   | 'precipitation'
   | 'outsideTemp'
-  | 'outsideHumidity';
+  | 'outsideHumidity'
+  | 'airTemp1'
+  | 'relHumidity1'
+  | 'airTemp2'
+  | 'relHumidity2'
+  | 'soilMoisture1'
+  | 'soilMoisture2'
+  | 'soilMoisture3'
+  | 'soilMoisture4';
 
 export interface VariableDef {
   key: NumericKey;
@@ -38,7 +46,21 @@ export const VARIABLES: Record<NumericKey, VariableDef> = {
   precipitation: { key: 'precipitation', label: 'Precipitación', short: 'Lluvia', unit: 'mm', min: 0, max: 500, decimals: 1, color: '#4a90c2', optional: true, aggregate: 'sum' },
   outsideTemp: { key: 'outsideTemp', label: 'Temperatura exterior', short: 'T. exterior', unit: '°C', min: -10, max: 60, decimals: 1, color: '#8e5bb5', optional: true, aggregate: 'mean' },
   outsideHumidity: { key: 'outsideHumidity', label: 'Humedad relativa exterior', short: 'HR exterior', unit: '%', min: 0, max: 100, decimals: 0, color: '#5d8fb0', optional: true, aggregate: 'mean' },
+  // Sistema de 4 parcelas (ESP32)
+  airTemp1: { key: 'airTemp1', label: 'Temperatura ambiental 1', short: 'T. amb. 1', unit: '°C', min: -10, max: 60, decimals: 1, color: '#e0663b', optional: true, aggregate: 'mean' },
+  relHumidity1: { key: 'relHumidity1', label: 'Humedad ambiental 1', short: 'HR amb. 1', unit: '%', min: 0, max: 100, decimals: 0, color: '#2b7bd6', optional: true, aggregate: 'mean' },
+  airTemp2: { key: 'airTemp2', label: 'Temperatura ambiental 2', short: 'T. amb. 2', unit: '°C', min: -10, max: 60, decimals: 1, color: '#c2407a', optional: true, aggregate: 'mean' },
+  relHumidity2: { key: 'relHumidity2', label: 'Humedad ambiental 2', short: 'HR amb. 2', unit: '%', min: 0, max: 100, decimals: 0, color: '#1f9e8f', optional: true, aggregate: 'mean' },
+  soilMoisture1: { key: 'soilMoisture1', label: 'Humedad del suelo · Parcela 1', short: 'Suelo P1', unit: '%', min: 0, max: 100, decimals: 0, color: '#2f7d4a', optional: true, aggregate: 'mean' },
+  soilMoisture2: { key: 'soilMoisture2', label: 'Humedad del suelo · Parcela 2', short: 'Suelo P2', unit: '%', min: 0, max: 100, decimals: 0, color: '#9c6b3f', optional: true, aggregate: 'mean' },
+  soilMoisture3: { key: 'soilMoisture3', label: 'Humedad del suelo · Parcela 3', short: 'Suelo P3', unit: '%', min: 0, max: 100, decimals: 0, color: '#6b7fa8', optional: true, aggregate: 'mean' },
+  soilMoisture4: { key: 'soilMoisture4', label: 'Humedad del suelo · Parcela 4', short: 'Suelo P4', unit: '%', min: 0, max: 100, decimals: 0, color: '#d9a21b', optional: true, aggregate: 'mean' },
 };
+
+export const SOIL_KEYS = ['soilMoisture1', 'soilMoisture2', 'soilMoisture3', 'soilMoisture4'] as const;
+export const AMBIENT_TEMP_KEYS = ['airTemp1', 'airTemp2'] as const;
+export const AMBIENT_HUM_KEYS = ['relHumidity1', 'relHumidity2'] as const;
+export const VALVE_KEYS = ['valve1', 'valve2', 'valve3', 'valve4'] as const;
 
 export const ALL_KEYS = Object.keys(VARIABLES) as NumericKey[];
 

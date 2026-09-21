@@ -15,7 +15,10 @@ import { fmt, fmtHours, variablesWithData } from '../lib/variables';
 import { useData } from '../state/DataContext';
 
 type AlertFilter = 'all' | 'temp' | 'hum' | 'soil' | 'abrupt' | 'gap';
-const KIND_GROUP: Record<AlertKind, AlertFilter> = { 'temp-high': 'temp', 'temp-low': 'temp', 'hum-high': 'hum', 'hum-low': 'hum', soil: 'soil', abrupt: 'abrupt', gap: 'gap' };
+const KIND_GROUP: Record<AlertKind, AlertFilter> = {
+  'temp-high': 'temp', 'temp-low': 'temp', 'hum-high': 'hum', 'hum-low': 'hum', soil: 'soil', abrupt: 'abrupt', gap: 'gap',
+  'soil-low': 'soil', 'temp-threshold': 'temp', 'sensor-stale': 'gap', 'esp32-offline': 'gap', 'valve-no-response': 'gap',
+};
 
 function PeriodTable({ periods, label }: { periods: PeriodSummary[]; label: (k: string) => string }) {
   return (

@@ -64,13 +64,13 @@ function timeLabel(v: number) {
   return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-const timeAxis = () => ({
+export const timeAxis = () => ({
   type: 'time' as const,
   axisLabel: { formatter: timeLabel, hideOverlap: true, color: '#62716a', rich: { b: { fontWeight: 600 as const, color: '#33413a' } } },
   splitLine: { show: false },
 });
 
-function tsTooltip(params: unknown) {
+export function tsTooltip(params: unknown) {
   const ps = (Array.isArray(params) ? params : [params]) as { value: [number, number]; seriesName: string; marker: string }[];
   if (!ps.length) return '';
   const d = new Date(ps[0].value[0]);

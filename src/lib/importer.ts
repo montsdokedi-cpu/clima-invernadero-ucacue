@@ -1,6 +1,7 @@
 import * as XLSX from 'xlsx';
 import type { ClimateRecord, Crop, DataValidation } from '../db/types';
 import { stageForDate } from './agro';
+import { parseValve } from './esp32/protocol';
 import { isValidISODate, toTimestamp } from './dates';
 import { assessRecord, flagSensorJumps, validateRecord } from './validation';
 import { ALL_KEYS, VARIABLES, type NumericKey } from './variables';
@@ -9,12 +10,24 @@ import { ALL_KEYS, VARIABLES, type NumericKey } from './variables';
 // Formatos: Excel (.xlsx/.xls), CSV/TXT y JSON (arreglo de lecturas, formato de API futura).
 
 export type TextField = 'observations' | 'recordedBy' | 'outsideWeather' | 'cropObservations' | 'phenologicalStage' | 'sensorId' | 'crop';
-export type ImportField = NumericKey | 'date' | 'time' | TextField;
+export type ValveField = 'valve1' | 'valve2' | 'valve3' | 'valve4';
+export type ImportField = NumericKey | 'date' | 'time' | TextField | ValveField;
+
+// Columnas del ESP32 (temperatura_ambiente_1, humedad_suelo_3, valvula_2…)
+const ESP32_COLUMNS: Record<string, ImportField> = {
+  temperaturaambiente1: 'airTemp1', humedadambiente1: 'relHumidity1', temperaturaambiente2: 'airTemp2', humedadambiente2: 'relHumidity2',
+  humedadsuelo1: 'soilMoisture1', humedadsuelo2: 'soilMoisture2', humedadsuelo3: 'soilMoisture3', humedadsuelo4: 'soilMoisture4',
+  humedadsueloparcela1: 'soilMoisture1', humedadsueloparcela2: 'soilMoisture2', humedadsueloparcela3: 'soilMoisture3', humedadsueloparcela4: 'soilMoisture4',
+  valvula1: 'valve1', valvula2: 'valve2', valvula3: 'valve3', valvula4: 'valve4',
+  electrovalvula1: 'valve1', electrovalvula2: 'valve2', electrovalvula3: 'valve3', electrovalvula4: 'valve4',
+  estadoelectrovalvula1: 'valve1', estadoelectrovalvula2: 'valve2', estadoelectrovalvula3: 'valve3', estadoelectrovalvula4: 'valve4',
+};
 
 export const IMPORT_FIELDS: { key: ImportField; label: string; required?: boolean }[] = [
   { key: 'date', label: 'Fecha', required: true },
   { key: 'time', label: 'Hora', required: true },
   ...ALL_KEYS.map((k) => ({ key: k as ImportField, label: `${VARIABLES[k].label} (${VARIABLES[k].unit})`, required: k === 'airTemp' || k === 'relHumidity' })),
+  ...([1, 2, 3, 4] as const).map((n) => ({ key: `valve${n}` as ImportField, label: `Estado electroválvula ${n}` })),
   { key: 'sensorId', label: 'Sensor (identificador)' },
   { key: 'crop', label: 'Cultivo' },
   { key: 'phenologicalStage', label: 'Etapa fenológica' },
@@ -43,6 +56,8 @@ const norm = (s: unknown) =>
 export function guessField(header: string): ImportField | '' {
   const h = norm(header);
   if (!h) return '';
+  const esp = ESP32_COLUMNS[h.replace(/(c|porcentaje)$/, '')] ?? ESP32_COLUMNS[h];
+  if (esp) return esp;
   if (h.includes('fecha') || h === 'date' || h === 'dia' || h === 'timestamp' || h === 'datetime') return 'date';
   if (h.startsWith('hora') || h === 'time') return 'time';
   if (h.includes('sensor') || h.includes('datalogger') || h === 'equipo' || h === 'deviceid' || h === 'device') return 'sensorId';
@@ -286,6 +301,9 @@ export function buildImportRows(sheet: ParsedSheet, mapping: (ImportField | '')[
       soilTemp: values.soilTemp ?? null, soilMoisture: values.soilMoisture ?? null, luminosity: values.luminosity ?? null,
       solarRadiation: values.solarRadiation ?? null, windSpeed: values.windSpeed ?? null, precipitation: values.precipitation ?? null,
       outsideTemp: values.outsideTemp ?? null, outsideHumidity: values.outsideHumidity ?? null,
+      airTemp1: values.airTemp1 ?? null, relHumidity1: values.relHumidity1 ?? null, airTemp2: values.airTemp2 ?? null, relHumidity2: values.relHumidity2 ?? null,
+      soilMoisture1: values.soilMoisture1 ?? null, soilMoisture2: values.soilMoisture2 ?? null, soilMoisture3: values.soilMoisture3 ?? null, soilMoisture4: values.soilMoisture4 ?? null,
+      valve1: parseValve(get('valve1')), valve2: parseValve(get('valve2')), valve3: parseValve(get('valve3')), valve4: parseValve(get('valve4')),
       phenologicalStage: text('phenologicalStage') || stageForDate(crop, date!),
       recordedBy: text('recordedBy') || defaults.recordedBy,
       method: defaults.method,

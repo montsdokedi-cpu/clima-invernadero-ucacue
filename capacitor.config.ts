@@ -4,7 +4,13 @@ const config: CapacitorConfig = {
   appId: 'ec.edu.ucacue.climainvernadero',
   appName: 'Clima UCACUE',
   webDir: 'dist',
-  android: { backgroundColor: '#f4f7f3' }
+  // Se mantiene el esquema https por defecto para no perder los datos ya guardados en el teléfono.
+  android: { backgroundColor: '#f4f7f3' },
+  plugins: {
+    // Las peticiones al ESP32 (http://IP-local) se hacen desde la capa nativa:
+    // evita bloqueos de CORS y de "contenido mixto" dentro del APK.
+    CapacitorHttp: { enabled: true },
+  },
 };
 
 export default config;

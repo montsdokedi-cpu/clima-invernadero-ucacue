@@ -9,6 +9,7 @@ import {
   Microscope,
   Settings,
   ShieldAlert,
+  ShowerHead,
   Sprout,
   X,
 } from 'lucide-react';
@@ -16,9 +17,11 @@ import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { saveSettings } from '../db/db';
 import { useData } from '../state/DataContext';
+import { Esp32Badge } from './irrigation';
 
 const NAV = [
   { to: '/', label: 'Dashboard', short: 'Inicio', icon: LayoutDashboard, end: true },
+  { to: '/riego', label: 'Riego y parcelas', short: 'Riego', icon: ShowerHead },
   { to: '/registrar', label: 'Registrar datos', short: 'Registrar', icon: ClipboardPen },
   { to: '/graficos', label: 'Gráficos', short: 'Gráficos', icon: ChartLine },
   { to: '/problemas', label: 'Problemas climáticos', short: 'Problemas', icon: ShieldAlert },
@@ -43,7 +46,7 @@ export function Layout() {
     window.scrollTo({ top: 0 });
   }, [location.pathname]);
 
-  const moreActive = NAV.slice(4).some((n) => location.pathname.startsWith(n.to));
+  const moreActive = NAV.slice(5).some((n) => location.pathname.startsWith(n.to));
 
   return (
     <div className={`app ${isDemo ? 'is-demo' : ''}`}>
@@ -93,6 +96,7 @@ export function Layout() {
               </select>
             )}
             {greenhouses.length === 1 && <span className="gh-name">{greenhouses[0].code} · {greenhouses[0].name}</span>}
+            <NavLink to="/riego" style={{ textDecoration: 'none' }}><Esp32Badge compact /></NavLink>
             <span className={`mode-badge ${isDemo ? 'demo' : 'real'}`}>{isDemo ? 'Datos de demostración' : 'Datos reales'}</span>
           </div>
         </header>
@@ -115,7 +119,7 @@ export function Layout() {
       </div>
 
       <nav className="bottom-nav" aria-label="Navegación principal">
-        {NAV.slice(0, 4).map(({ to, short, icon: Icon, end }) => (
+        {NAV.slice(0, 5).map(({ to, short, icon: Icon, end }) => (
           <NavLink key={to} to={to} end={end} className={({ isActive }) => `bn-item ${isActive ? 'active' : ''}`}>
             <Icon size={21} />
             <span>{short}</span>
@@ -130,7 +134,7 @@ export function Layout() {
       {moreOpen && (
         <div className="sheet-backdrop" onClick={() => setMoreOpen(false)}>
           <div className="sheet" onClick={(e) => e.stopPropagation()}>
-            {NAV.slice(4).map(({ to, label, icon: Icon }) => (
+            {NAV.slice(5).map(({ to, label, icon: Icon }) => (
               <NavLink key={to} to={to} className={({ isActive }) => `sheet-item ${isActive ? 'active' : ''}`}>
                 <Icon size={22} />
                 <span>{label}</span>

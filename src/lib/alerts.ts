@@ -4,7 +4,20 @@ import { consecutiveChanges, sortByTs } from './stats';
 import { fmt, isNum } from './variables';
 
 export type AlertLevel = 'info' | 'warning' | 'danger';
-export type AlertKind = 'temp-high' | 'temp-low' | 'hum-high' | 'hum-low' | 'soil' | 'abrupt' | 'gap';
+export type AlertKind =
+  | 'temp-high'
+  | 'temp-low'
+  | 'hum-high'
+  | 'hum-low'
+  | 'soil'
+  | 'abrupt'
+  | 'gap'
+  // Sistema de riego (ESP32)
+  | 'soil-low'
+  | 'temp-threshold'
+  | 'sensor-stale'
+  | 'esp32-offline'
+  | 'valve-no-response';
 
 export interface ClimateAlert {
   id: string;

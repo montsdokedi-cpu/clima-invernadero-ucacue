@@ -12,6 +12,7 @@ import {
   Thermometer,
   TrendingDown,
   TrendingUp,
+  ShowerHead,
   Upload,
   Waves,
 } from 'lucide-react';
@@ -34,9 +35,49 @@ import { summarize } from '../lib/stats';
 import { fmt, fmtHours } from '../lib/variables';
 import { SOURCE_LABELS, type RecordSource } from '../db/types';
 import { useData } from '../state/DataContext';
+import { useEsp32 } from '../state/Esp32Context';
 import { useToast } from '../state/Toast';
+import { AmbientCards, Esp32Badge, ParcelCard } from '../components/irrigation';
+import { useLastSystemRecord } from './Irrigation';
 
-const pct = (a: number, b: number) => (b > 0 ? `${fmt((a / b) * 100, 0)} % del tiempo` : '—');
+/** Condiciones ambientales (2 puntos) y las 4 parcelas: lectura en vivo del ESP32 o último dato guardado. */
+function SystemOverview() {
+  const esp = useEsp32();
+  const last = useLastSystemRecord();
+  const r = esp.connected ? esp.reading : null;
+  if (!r && !last && !esp.transportKind) {
+    return (
+      <div className="notice info" style={{ marginBottom: 16 }}>
+        <ShowerHead size={18} />
+        <span>Sistema de 4 parcelas y 2 puntos ambientales: configura la conexión con el ESP32 en <Link to="/configuracion">Configuración</Link> para ver las lecturas y controlar las electroválvulas.</span>
+      </div>
+    );
+  }
+  return (
+    <>
+      <div className="section-head">
+        <h2><ShowerHead size={18} className="text-green" /> Condiciones ambientales <Esp32Badge /></h2>
+        <Link to="/riego" className="small">Riego y control →</Link>
+      </div>
+      <AmbientCards t1={r ? r.airTemp1 : last?.airTemp1} h1={r ? r.relHumidity1 : last?.relHumidity1} t2={r ? r.airTemp2 : last?.airTemp2} h2={r ? r.relHumidity2 : last?.relHumidity2} ts={last?.ts} />
+      <div className="section-head"><h2>Parcelas</h2></div>
+      <div className="parcel-grid" style={{ marginBottom: 8 }}>
+        {esp.parcels.map((p) => (
+          <ParcelCard
+            key={p.key}
+            parcel={p}
+            control={false}
+            soil={r ? r.soil[p.n - 1] : (last?.[`soilMoisture${p.n}` as 'soilMoisture1'] ?? null)}
+            valve={r ? r.valves[p.n - 1] : (last?.[`valve${p.n}` as 'valve1'] ?? null)}
+            lastTs={last?.ts}
+          />
+        ))}
+      </div>
+    </>
+  );
+}
+
+const pct =(a: number, b: number) => (b > 0 ? `${fmt((a / b) * 100, 0)} % del tiempo` : '—');
 
 export default function Dashboard() {
   const { ready, records, historyRecords, periodRecords, resolved, settings, thresholds, isDemo } = useData();
@@ -64,6 +105,7 @@ export default function Dashboard() {
     return (
       <>
         <PageHeader title="Monitoreo del cultivo de tomate" description="Invernadero UCACUE · Climatología aplicada" icon={<Leaf size={22} />} />
+        <SystemOverview />
         <EmptyState icon={<Thermometer size={30} />} title="Aún no hay datos del invernadero">
           {isDemo
             ? 'No hay datos de demostración cargados.'
@@ -108,6 +150,8 @@ export default function Dashboard() {
           </>
         }
       />
+
+      <SystemOverview />
 
       <PeriodFilter />
 

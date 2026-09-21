@@ -1,7 +1,8 @@
 import { addDays, todayISO, toTimestamp } from '../lib/dates';
+import { decide } from '../lib/irrigation';
 import { flagSensorJumps } from '../lib/validation';
-import { db, tomatoThresholds } from './db';
-import type { ClimateRecord, StageChange } from './types';
+import { db, defaultParcels, tomatoThresholds } from './db';
+import type { ClimateRecord, Parcel, ParcelId, StageChange, ValveEvent } from './types';
 
 // DATOS DE DEMOSTRACIÓN — simulados, NO provienen del invernadero real.
 // Imitan un datalogger (lecturas cada 30 min, 24 h) para mostrar el análisis
@@ -24,8 +25,10 @@ export async function hasDemoData() {
 }
 
 export async function removeDemoData() {
-  await db.transaction('rw', [db.climateRecords, db.crops, db.greenhouses, db.climateThresholds, db.reports, db.users], async () => {
+  await db.transaction('rw', [db.climateRecords, db.crops, db.greenhouses, db.climateThresholds, db.reports, db.users, db.parcels, db.valveEvents], async () => {
     await db.climateRecords.filter((r) => r.isDemo).delete();
+    await db.parcels.filter((r) => r.isDemo).delete();
+    await db.valveEvents.filter((r) => r.isDemo).delete();
     await db.crops.filter((r) => r.isDemo).delete();
     await db.greenhouses.filter((r) => r.isDemo).delete();
     await db.climateThresholds.filter((r) => r.isDemo).delete();
@@ -47,7 +50,7 @@ export async function seedDemoData(days = 45) {
   ];
   const stageOn = (date: string) => stageHistory.filter((s) => s.from <= date).at(-1)!.stage;
 
-  await db.transaction('rw', [db.climateRecords, db.crops, db.greenhouses, db.climateThresholds, db.users], async () => {
+  await db.transaction('rw', [db.climateRecords, db.crops, db.greenhouses, db.climateThresholds, db.users, db.parcels, db.valveEvents], async () => {
     const ghId = (await db.greenhouses.add({
       code: 'DEMO-01',
       name: 'Invernadero de demostración',
@@ -84,6 +87,34 @@ export async function seedDemoData(days = 45) {
     let weather = 'Parcialmente nublado';
     let soil = 19;
     let soilM = 62;
+
+    // Sistema de 4 parcelas (demostración): umbrales de EJEMPLO, no recomendaciones agronómicas
+    const demoParcels: Parcel[] = defaultParcels(true).map((p) =>
+      p.n === 1 ? { ...p, mode: 'automatico', humidityMin: 30, humidityTarget: 45, tempMin: 12, tempMax: 30, maxDurationMin: 40, notes: 'Umbrales de ejemplo (demo)' }
+        : p.n === 2 ? { ...p, mode: 'humedad', humidityMin: 35, humidityTarget: 50, maxDurationMin: 40, notes: 'Umbrales de ejemplo (demo)' }
+          : p.n === 3 ? { ...p, mode: 'temperatura', tempMin: 26, tempMax: 29, maxDurationMin: 30, notes: 'Umbrales de ejemplo (demo)' }
+            : { ...p, mode: 'manual', notes: 'Riego manual de ejemplo (demo)' },
+    );
+    await db.parcels.bulkAdd(demoParcels);
+    const soilP = [38, 44, 40, 47];
+    const valveP = [false, false, false, false];
+    const openSince: (number | null)[] = [null, null, null, null];
+    const events: ValveEvent[] = [];
+    const openEvent = (i: number, ts: number, reason: string) => {
+      valveP[i] = true;
+      openSince[i] = ts;
+      events.push({ parcel: (i + 1) as ParcelId, start: ts, end: null, mode: demoParcels[i].mode, reason, origin: i === 3 ? 'manual' : 'demo', isDemo: true });
+    };
+    const closeEvent = (i: number, ts: number, reason: string) => {
+      valveP[i] = false;
+      openSince[i] = null;
+      const ev = [...events].reverse().find((e) => e.parcel === i + 1 && e.end === null);
+      if (ev) {
+        ev.end = ts;
+        ev.closeReason = reason;
+      }
+    };
+
     for (let d = 0; d < days; d++) {
       const date = addDays(start, d);
       // Algunos días el datalogger no registró (batería / descarga pendiente)
@@ -115,10 +146,30 @@ export async function seedDemoData(days = 45) {
         soilM = Math.min(88, Math.max(40, soilM - phase * 0.18 + (slot === 16 ? 9 : 0) + (rainy ? 0.05 : 0) + noise(0.3)));
         const solarRadiation = Math.round(Math.max(0, phase * (160 + sunny * 640) + noise(20)));
         const outsideTemp = tNight - 1.8 + (tBoost - 4.5) * phase + noise(0.6);
+        // Dos puntos ambientales con el mismo promedio que la temperatura/HR general
+        const dT = 0.4 + phase * 0.6 + noise(0.2);
+        const t1 = +(airTemp - dT).toFixed(1);
+        const t2 = +(airTemp + dT).toFixed(1);
+        const h1 = Math.min(100, Math.round(relHumidity + 1.5 + noise(1)));
+        const h2 = Math.max(0, Math.round(relHumidity - 1.5 + noise(1)));
+        // Suelo por parcela: se seca con el calor del día y se humedece al regar
+        for (let i = 0; i < 4; i++) soilP[i] = Math.max(12, Math.min(90, soilP[i] - (0.12 + 0.55 * phase) * (1 + i * 0.12) + (valveP[i] ? 4.2 : 0) + noise(0.25)));
+        const reading = { airTemp1: t1, relHumidity1: h1, airTemp2: t2, relHumidity2: h2, soil: soilP.map((s) => Math.round(s)), valves: [...valveP] };
+        for (let i = 0; i < 3; i++) {
+          const dec = decide(demoParcels[i], reading, valveP[i], openSince[i], ts);
+          if (dec.action === 'abrir') openEvent(i, ts, dec.reason);
+          if (dec.action === 'cerrar') closeEvent(i, ts, dec.reason);
+        }
+        // Parcela 4 (manual): riego de 30 min a las 07:00 cada 3 días
+        if (d % 3 === 0 && time === '07:00') openEvent(3, ts, 'Apertura manual desde la aplicación (demo).');
+        if (valveP[3] && openSince[3] && ts - openSince[3] >= 30 * 60000) closeEvent(3, ts, 'Cierre manual desde la aplicación (demo).');
         records.push({
           date, time, ts, greenhouseId: ghId, cropId: tomatoId,
-          airTemp: +airTemp.toFixed(1),
-          relHumidity: Math.round(relHumidity),
+          airTemp: +((t1 + t2) / 2).toFixed(1),
+          relHumidity: Math.round((h1 + h2) / 2),
+          airTemp1: t1, relHumidity1: h1, airTemp2: t2, relHumidity2: h2,
+          soilMoisture1: Math.round(soilP[0]), soilMoisture2: Math.round(soilP[1]), soilMoisture3: Math.round(soilP[2]), soilMoisture4: Math.round(soilP[3]),
+          valve1: valveP[0], valve2: valveP[1], valve3: valveP[2], valve4: valveP[3],
           soilTemp: +soil.toFixed(1),
           soilMoisture: Math.round(soilM),
           luminosity: Math.round(solarRadiation * 110),
@@ -142,5 +193,9 @@ export async function seedDemoData(days = 45) {
       }
     }
     await db.climateRecords.bulkAdd(flagSensorJumps(records));
+    // Los riegos que quedaron abiertos al final se cierran en la última lectura
+    const lastTs = records.at(-1)?.ts ?? now;
+    for (const e of events) if (e.end === null) { e.end = lastTs; e.closeReason = 'Fin de los datos de demostración.'; }
+    await db.valveEvents.bulkAdd(events);
   });
 }

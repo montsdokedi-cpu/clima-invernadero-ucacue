@@ -10,7 +10,21 @@ DATOS REALES DE SENSORES → ALMACENAMIENTO → VALIDACIÓN → CÁLCULOS → GR
 → RESOLUCIÓN DE PROBLEMAS PRÁCTICOS → REPORTE ACADÉMICO
 ```
 
-> No controla sensores, riego, ventilación ni actuadores. **No diagnostica enfermedades**: identifica condiciones climáticas y recomienda su verificación en campo.
+> **No diagnostica enfermedades**: identifica condiciones climáticas y recomienda su verificación en campo.
+
+## Sistema de riego (v3): 4 parcelas + 2 puntos ambientales + ESP32
+
+```
+MONITOREAR → ALMACENAR → GRAFICAR → EXPORTAR → CONFIGURAR → CONTROLAR
+```
+
+- **4 parcelas**, cada una con 1 sensor de humedad del suelo y 1 electroválvula. Cada parcela tiene su propio modo (Automático, Solo humedad, Solo temperatura o Manual) y sus propios umbrales configurables. Al instalar, todas quedan en **Manual y sin umbrales**, así que nada se activa solo.
+- **2 puntos ambientales** (temperatura y humedad del aire). Su promedio alimenta los análisis climáticos existentes.
+- **ESP32 por Wi-Fi (HTTP/JSON):** indicador de conexión, última comunicación, IP y botón «Probar conexión». El transporte es modular (`src/lib/esp32/transport.ts`) y el contrato de datos está en [`docs/esp32-protocolo.md`](docs/esp32-protocolo.md).
+- **Historial de activaciones:** parcela, electroválvula, fecha, inicio, fin, duración, modo y motivo.
+- **Alertas:** suelo bajo el umbral, temperatura sobre el umbral, sensor sin datos, ESP32 desconectado y electroválvula que no responde.
+- **Excel del sistema** (Historial): permite elegir fecha inicial, fecha final, parcela y variables, o descargar todo el histórico.
+- **Simulador del ESP32** para probar sin hardware; disponible solo en modo demostración.
 
 ## Ejecutar
 

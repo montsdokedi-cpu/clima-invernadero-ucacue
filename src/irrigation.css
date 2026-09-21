@@ -1,0 +1,65 @@
+/* ---------- Sistema de riego: 4 parcelas + ESP32 ---------- */
+.esp-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 99px; white-space: nowrap; }
+.esp-badge.ok { background: var(--green-50); color: var(--green); }
+.esp-badge.bad { background: var(--red-50); color: var(--red); }
+.esp-badge.wait { background: var(--amber-50); color: var(--amber-text); }
+.esp-badge.off { background: #eef1ef; color: #55635b; }
+
+.esp-card .esp-head { display: flex; gap: 12px; align-items: center; margin-bottom: 12px; }
+.esp-dot { width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center; flex-shrink: 0; }
+.esp-dot.ok { background: var(--green-50); color: var(--green); }
+.esp-dot.bad { background: var(--red-50); color: var(--red); }
+.esp-dot.off { background: #eef1ef; color: #55635b; }
+.esp-title { display: block; font-size: 15.5px; }
+.esp-grid dd { word-break: break-all; }
+
+.ambient-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.ambient-card { padding: 14px 16px; }
+.ambient-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+.ambient-values { display: flex; gap: 18px; flex-wrap: wrap; margin-top: 6px; font-size: 14px; color: var(--muted); }
+.ambient-values span { display: inline-flex; align-items: center; gap: 5px; }
+.ambient-values b { font-size: 24px; color: var(--text); font-variant-numeric: tabular-nums; }
+.ambient-note { grid-column: 1 / -1; }
+.text-orange { color: var(--orange); } .text-blue { color: var(--blue); } .text-red { color: var(--red); }
+
+.parcel-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+@media (max-width: 1200px) { .parcel-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .parcel-grid, .ambient-grid { grid-template-columns: 1fr; } }
+.parcel-card { padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
+.parcel-card.is-open { border-color: #9fd3b1; box-shadow: 0 0 0 3px rgba(47, 125, 74, 0.08); }
+.parcel-card header { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.parcel-card h3 { font-size: 14.5px; letter-spacing: .03em; }
+.valve-state { font-size: 12px; font-weight: 800; padding: 3px 9px; border-radius: 99px; white-space: nowrap; }
+.valve-state.open { background: var(--green-50); color: var(--green); }
+.valve-state.closed { background: var(--red-50); color: var(--red); }
+.valve-state.unknown { background: #eef1ef; color: #55635b; }
+.parcel-reading { display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; align-items: center; color: var(--teal); }
+.parcel-reading > div:first-of-type { display: flex; flex-direction: column; }
+.parcel-reading strong { font-size: 26px; color: var(--text); font-variant-numeric: tabular-nums; line-height: 1.1; }
+.parcel-bar { grid-column: 1 / -1; position: relative; height: 8px; background: #edf1ee; border-radius: 99px; overflow: visible; }
+.parcel-bar span { position: absolute; inset: 0 auto 0 0; background: linear-gradient(90deg, #1f9e8f, #2b7bd6); border-radius: 99px; }
+.parcel-bar .mark { position: absolute; top: -3px; width: 2px; height: 14px; border-radius: 2px; }
+.parcel-bar .mark.min { background: var(--red); }
+.parcel-bar .mark.target { background: var(--green); }
+.parcel-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; margin: 0; font-size: 13px; }
+.parcel-meta dt { font-size: 11px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .03em; }
+.parcel-meta dd { margin: 0; font-weight: 600; }
+.mode-picker { display: flex; flex-wrap: wrap; gap: 5px; }
+.mode-picker .chip { padding: 4px 10px; font-size: 12px; }
+.decision { background: var(--bg); border-radius: 8px; padding: 6px 10px; }
+.decision.blocked { background: var(--amber-50); color: var(--amber-text); }
+.parcel-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.parcel-actions .btn { flex: 1; justify-content: center; }
+.parcel-forms { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+@media (max-width: 900px) { .parcel-forms { grid-template-columns: 1fr; } }
+.parcel-forms .card h3 { font-size: 15px; margin-bottom: 10px; }
+.export-vars { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 2px 12px; }
+.parcel-cell { font-variant-numeric: tabular-nums; white-space: nowrap; font-size: 12.5px; }
+.parcel-cell .vd { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-left: 2px; background: #cfd8d2; }
+.parcel-cell .vd.on { background: var(--green); }
+
+/* Menú inferior con 6 accesos en celular */
+@media (max-width: 900px) {
+  .bottom-nav { grid-template-columns: repeat(6, 1fr); }
+  .bn-item { font-size: 10.5px; }
+}

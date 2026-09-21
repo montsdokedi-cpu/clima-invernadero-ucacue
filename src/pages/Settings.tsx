@@ -1,5 +1,6 @@
 import { BookOpen, Database, FlaskConical, Pencil, Plus, Settings as SettingsIcon, Sprout, Trash2, Warehouse } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { Esp32SettingsCard } from '../components/Esp32Settings';
 import { ConfirmModal, Field, Modal, PageHeader } from '../components/ui';
 import { db, DEFAULT_SETTINGS, getSettings, saveSettings, tomatoThresholds } from '../db/db';
 import { hasDemoData, removeDemoData, seedDemoData } from '../db/seed';
@@ -106,6 +107,7 @@ export default function SettingsPage() {
       app: 'Clima Invernadero UCC', version: 2, exportedAt: new Date().toISOString(),
       settings: await getSettings(), users: await db.users.toArray(), greenhouses: await db.greenhouses.toArray(), crops: await db.crops.toArray(),
       climateRecords: await db.climateRecords.toArray(), climateThresholds: await db.climateThresholds.toArray(), reports: await db.reports.toArray(),
+      parcels: await db.parcels.toArray(), valveEvents: await db.valveEvents.toArray(),
     };
     downloadBlob(new Blob([JSON.stringify(dump)], { type: 'application/json' }), `respaldo_clima_ucacue_${todayISO()}.json`);
     toast('Respaldo descargado.');
@@ -115,8 +117,11 @@ export default function SettingsPage() {
     try {
       const dump = JSON.parse(await file.text());
       if (dump.app !== 'Clima Invernadero UCC' || !Array.isArray(dump.climateRecords)) throw new Error('El archivo no es un respaldo de esta aplicación.');
-      await db.transaction('rw', [db.users, db.greenhouses, db.crops, db.climateRecords, db.climateThresholds, db.reports, db.settings], async () => {
+      await db.transaction('rw', [db.users, db.greenhouses, db.crops, db.climateRecords, db.climateThresholds, db.reports, db.settings, db.parcels, db.valveEvents], async () => {
         for (const t of [db.users, db.greenhouses, db.crops, db.climateRecords, db.climateThresholds, db.reports]) await t.clear();
+        // Respaldos anteriores a la v3 no traen parcelas: se conservan las actuales
+        if (Array.isArray(dump.parcels)) { await db.parcels.clear(); await db.parcels.bulkPut(dump.parcels); }
+        if (Array.isArray(dump.valveEvents)) { await db.valveEvents.clear(); await db.valveEvents.bulkPut(dump.valveEvents); }
         await db.users.bulkPut(dump.users ?? []);
         await db.greenhouses.bulkPut(dump.greenhouses ?? []);
         await db.crops.bulkPut(dump.crops ?? []);
@@ -267,6 +272,8 @@ export default function SettingsPage() {
         </div>
 
         <div className="stack">
+          <Esp32SettingsCard />
+
           <section className="card card-pad">
             <h3 className="card-title">Detección de cambios bruscos y vacíos</h3>
             <div className="form-grid">
@@ -326,7 +333,7 @@ export default function SettingsPage() {
           <section className="card card-pad">
             <h3 className="card-title">Acerca de</h3>
             <p className="small muted">
-              Clima Invernadero UCACUE v2.0 · Herramienta de Climatología Aplicada: monitoreo, análisis, visualización e interpretación del microclima para el cultivo de tomate. No controla sensores, riego, ventilación ni actuadores y no diagnostica enfermedades.
+              Clima Invernadero UCACUE v3.0 · Herramienta de Climatología Aplicada: monitoreo, análisis e interpretación del microclima para el cultivo de tomate, y control de las 4 electroválvulas de riego a través del ESP32. No diagnostica enfermedades.
             </p>
           </section>
         </div>

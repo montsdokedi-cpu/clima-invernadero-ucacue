@@ -4,11 +4,14 @@ import type {
   ClimateRecord,
   ClimateThreshold,
   Crop,
+  Esp32Settings,
   Greenhouse,
+  Parcel,
   Report,
   User,
+  ValveEvent,
 } from './types';
-import { TOMATO_STAGES } from './types';
+import { PARCEL_IDS, TOMATO_STAGES } from './types';
 
 // Base de datos local (IndexedDB) — funciona sin internet en web, PWA y APK.
 // El esquema replica las tablas del modelo relacional (docs/base-de-datos.sql)
@@ -22,6 +25,8 @@ export const db = new Dexie('ClimaInvernaderoUCC') as Dexie & {
   climateThresholds: EntityTable<ClimateThreshold, 'id'>;
   reports: EntityTable<Report, 'id'>;
   settings: EntityTable<AppSettings, 'id'>;
+  parcels: EntityTable<Parcel, 'key'>;
+  valveEvents: EntityTable<ValveEvent, 'id'>;
 };
 
 // Nota: IndexedDB no indexa booleanos, por eso `isDemo` se filtra en memoria.
@@ -51,6 +56,31 @@ db.version(2)
       });
   });
 
+// v3: sistema de 4 parcelas con electroválvulas y ESP32. Solo agrega tablas;
+// los registros existentes se conservan sin cambios.
+db.version(3).stores({
+  parcels: 'key, n',
+  valveEvents: '++id, parcel, start, end',
+});
+
+/** Valores técnicos de comunicación (no agronómicos), todos modificables en Configuración. */
+export const DEFAULT_ESP32: Esp32Settings = {
+  transport: 'desactivado',
+  host: '',
+  port: null,
+  dataPath: '/datos',
+  commandPath: '/valvula',
+  configPath: '/config',
+  statusPath: '/estado',
+  pollSeconds: 10,
+  saveEveryMin: 5,
+  offlineSeconds: 30,
+  commandTimeoutSeconds: 15,
+  sensorStaleMinutes: 10,
+  controlLogic: 'esp32',
+  autoConnect: true,
+};
+
 export const DEFAULT_SETTINGS: AppSettings = {
   id: 'app',
   institution: 'Universidad Católica de Cuenca (UCACUE)',
@@ -68,6 +98,15 @@ export const DEFAULT_SETTINGS: AppSettings = {
     precipitation: false,
     outsideTemp: false,
     outsideHumidity: false,
+    // Los valores por parcela y por punto ambiental llegan del ESP32; no se muestran en el registro manual
+    airTemp1: false,
+    relHumidity1: false,
+    airTemp2: false,
+    relHumidity2: false,
+    soilMoisture1: false,
+    soilMoisture2: false,
+    soilMoisture3: false,
+    soilMoisture4: false,
   },
   abruptTempChange: 5,
   abruptHumidityChange: 20,
@@ -79,6 +118,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   studyProblem:
     'Determinar si las condiciones de temperatura y humedad relativa registradas dentro del invernadero son adecuadas para el desarrollo del cultivo de tomate e identificar periodos de posible estrés climático.',
   referenceSource: 'Rangos referenciales configurables según variedad, etapa fenológica y bibliografía utilizada.',
+  esp32: DEFAULT_ESP32,
 };
 
 export async function getSettings(): Promise<AppSettings> {
@@ -88,7 +128,27 @@ export async function getSettings(): Promise<AppSettings> {
     ...s,
     optionalFields: { ...DEFAULT_SETTINGS.optionalFields, ...s?.optionalFields },
     sourceFilter: s?.sourceFilter?.length ? s.sourceFilter : DEFAULT_SETTINGS.sourceFilter,
+    esp32: { ...DEFAULT_ESP32, ...s?.esp32 },
   };
+}
+
+/** Parcelas sin umbrales y en modo Manual: nada se activa hasta que el usuario configure. */
+export function defaultParcels(isDemo: boolean): Parcel[] {
+  return PARCEL_IDS.map((n) => ({
+    key: `${isDemo ? 'demo' : 'real'}-${n}`,
+    n,
+    name: `Parcela ${n}`,
+    mode: 'manual',
+    humidityMin: null,
+    humidityTarget: null,
+    tempMin: null,
+    tempMax: null,
+    maxDurationMin: null,
+    tempSource: 'promedio',
+    cropId: null,
+    isDemo,
+    updatedAt: Date.now(),
+  }));
 }
 
 export async function saveSettings(patch: Partial<AppSettings>) {
@@ -131,7 +191,7 @@ let basePromise: Promise<void> | null = null;
 
 /** Crea los datos base reales la primera vez (una sola vez por sesión) y adapta instalaciones anteriores. */
 export function ensureBaseData() {
-  basePromise ??= db.transaction('rw', [db.greenhouses, db.climateThresholds, db.settings, db.crops], createBaseData);
+  basePromise ??= db.transaction('rw', [db.greenhouses, db.climateThresholds, db.settings, db.crops, db.parcels], createBaseData);
   return basePromise;
 }
 
@@ -169,6 +229,8 @@ async function createBaseData() {
     }
     if (!realThresholds.some((t) => t.stage)) await db.climateThresholds.bulkAdd(tomatoThresholds(false).filter((t) => t.stage));
   }
+
+  if ((await db.parcels.filter((p) => !p.isDemo).count()) === 0) await db.parcels.bulkAdd(defaultParcels(false));
 
   const realCrops = await db.crops.filter((c) => !c.isDemo).count();
   if (realCrops === 0 && ghId) {

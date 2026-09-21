@@ -38,7 +38,7 @@ type FormState = {
 } & Record<NumericKey, string>;
 
 const STICKY_KEY = 'clima-ucc-ultimo-formulario';
-const PLACEHOLDERS: Record<NumericKey, string> = {
+const PLACEHOLDERS: Partial<Record<NumericKey, string>> = {
   airTemp: '22.5', relHumidity: '78', soilTemp: '21', soilMoisture: '65', luminosity: '25000', solarRadiation: '450', windSpeed: '0.8', precipitation: '0', outsideTemp: '19.5', outsideHumidity: '85',
 };
 
@@ -188,6 +188,14 @@ export default function RecordForm() {
       precipitation: values.precipitation ?? null,
       outsideTemp: values.outsideTemp ?? null,
       outsideHumidity: values.outsideHumidity ?? null,
+      airTemp1: values.airTemp1 ?? null,
+      relHumidity1: values.relHumidity1 ?? null,
+      airTemp2: values.airTemp2 ?? null,
+      relHumidity2: values.relHumidity2 ?? null,
+      soilMoisture1: values.soilMoisture1 ?? null,
+      soilMoisture2: values.soilMoisture2 ?? null,
+      soilMoisture3: values.soilMoisture3 ?? null,
+      soilMoisture4: values.soilMoisture4 ?? null,
       phenologicalStage: form.phenologicalStage.trim(),
       recordedBy: form.recordedBy.trim(),
       method: form.method,

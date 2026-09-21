@@ -117,6 +117,20 @@ export interface ClimateRecord {
   /** Temperatura y HR exteriores (estación externa), si existen */
   outsideTemp?: number | null;
   outsideHumidity?: number | null;
+  /** Sistema de 4 parcelas: 2 puntos ambientales y 4 sensores de humedad del suelo (ESP32) */
+  airTemp1?: number | null;
+  relHumidity1?: number | null;
+  airTemp2?: number | null;
+  relHumidity2?: number | null;
+  soilMoisture1?: number | null;
+  soilMoisture2?: number | null;
+  soilMoisture3?: number | null;
+  soilMoisture4?: number | null;
+  /** Estado de las electroválvulas en el momento de la lectura (true = abierta) */
+  valve1?: boolean | null;
+  valve2?: boolean | null;
+  valve3?: boolean | null;
+  valve4?: boolean | null;
   phenologicalStage?: string;
   recordedBy?: string;
   method?: string;
@@ -174,7 +188,15 @@ export type OptionalField =
   | 'windSpeed'
   | 'precipitation'
   | 'outsideTemp'
-  | 'outsideHumidity';
+  | 'outsideHumidity'
+  | 'airTemp1'
+  | 'relHumidity1'
+  | 'airTemp2'
+  | 'relHumidity2'
+  | 'soilMoisture1'
+  | 'soilMoisture2'
+  | 'soilMoisture3'
+  | 'soilMoisture4';
 
 export interface AppSettings {
   id: 'app';
@@ -196,4 +218,91 @@ export interface AppSettings {
   studyTitle: string;
   /** Bibliografía o criterio usado para los rangos de referencia */
   referenceSource: string;
+  /** Conexión con el ESP32 (Wi-Fi) */
+  esp32: Esp32Settings;
+}
+
+// ---------------------------------------------------------------------------
+// Sistema físico: 4 parcelas (sensor de suelo + electroválvula), 2 puntos
+// ambientales y 1 ESP32 por Wi-Fi. No se asume hardware específico.
+// ---------------------------------------------------------------------------
+
+export const PARCEL_IDS = [1, 2, 3, 4] as const;
+export type ParcelId = (typeof PARCEL_IDS)[number];
+
+export type IrrigationMode = 'automatico' | 'humedad' | 'temperatura' | 'manual';
+export const MODE_LABELS: Record<IrrigationMode, string> = {
+  automatico: 'Automático',
+  humedad: 'Solo humedad',
+  temperatura: 'Solo temperatura',
+  manual: 'Manual',
+};
+export const MODE_HELP: Record<IrrigationMode, string> = {
+  automatico: 'Considera la humedad del suelo de la parcela y la temperatura ambiental.',
+  humedad: 'Abre si la humedad del suelo baja de la mínima y cierra al alcanzar la objetivo.',
+  temperatura: 'Abre si la temperatura ambiental supera la máxima y cierra al bajar de la mínima.',
+  manual: 'El usuario abre y cierra la electroválvula desde la aplicación.',
+};
+
+/** Punto ambiental usado para las decisiones por temperatura */
+export type TempSource = 'promedio' | 'punto1' | 'punto2';
+
+export interface Parcel {
+  /** 'real-1' … 'real-4' / 'demo-1' … 'demo-4' */
+  key: string;
+  n: ParcelId;
+  name: string;
+  mode: IrrigationMode;
+  /** Umbrales configurables (null = sin configurar). No son valores agronómicos definitivos. */
+  humidityMin: number | null;
+  humidityTarget: number | null;
+  tempMin: number | null;
+  tempMax: number | null;
+  /** Límite de seguridad de un riego automático (min); null = sin límite */
+  maxDurationMin: number | null;
+  tempSource: TempSource;
+  cropId?: number | null;
+  notes?: string;
+  isDemo: boolean;
+  updatedAt: number;
+}
+
+export type ValveOrigin = 'esp32' | 'app' | 'manual' | 'demo';
+
+/** Historial de activaciones de electroválvulas */
+export interface ValveEvent {
+  id?: number;
+  parcel: ParcelId;
+  start: number;
+  end: number | null;
+  mode: IrrigationMode;
+  reason: string;
+  closeReason?: string;
+  origin: ValveOrigin;
+  isDemo: boolean;
+}
+
+export interface Esp32Settings {
+  /** 'desactivado' no intenta conectar; 'simulador' solo en modo demostración */
+  transport: 'desactivado' | 'http' | 'simulador';
+  /** Dirección IP o nombre del ESP32 (sin definir hasta tener el hardware) */
+  host: string;
+  port: number | null;
+  dataPath: string;
+  commandPath: string;
+  configPath: string;
+  statusPath: string;
+  /** Segundos entre consultas al ESP32 */
+  pollSeconds: number;
+  /** Cada cuántos minutos se guarda una lectura en el histórico (además de cada cambio de válvula) */
+  saveEveryMin: number;
+  /** Segundos sin respuesta para considerar el ESP32 desconectado */
+  offlineSeconds: number;
+  /** Segundos de espera para confirmar una orden a una electroválvula */
+  commandTimeoutSeconds: number;
+  /** Minutos sin datos válidos de un sensor para alertar */
+  sensorStaleMinutes: number;
+  /** Dónde se ejecutan los modos automáticos */
+  controlLogic: 'esp32' | 'app';
+  autoConnect: boolean;
 }
