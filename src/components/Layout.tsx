@@ -54,7 +54,7 @@ export function Layout() {
         <div className="brand">
           <Logo />
           <div>
-            <strong>Clima Invernadero UCACUE</strong>
+            <strong>InverClima</strong>
             <span>Climatología aplicada · Tomate</span>
           </div>
         </div>
@@ -76,7 +76,7 @@ export function Layout() {
         <header className="topbar">
           <div className="topbar-brand">
             <Logo />
-            <strong>Clima UCACUE</strong>
+            <strong>InverClima</strong>
           </div>
           <div className="topbar-right">
             {greenhouses.length > 1 && (
@@ -105,7 +105,7 @@ export function Layout() {
           <div className="demo-banner" role="note">
             <FlaskConical size={18} />
             <span>
-              <strong>Modo demostración.</strong> Datos simulados de un datalogger: no corresponden a mediciones del invernadero de la UCACUE y no deben usarse en el análisis académico.
+              <strong>Modo demostración.</strong> Datos simulados de un datalogger: no corresponden a mediciones reales del invernadero y no deben usarse en el análisis académico.
             </span>
             <button className="btn btn-sm btn-light" onClick={() => saveSettings({ dataMode: 'real' })}>
               Ver datos reales

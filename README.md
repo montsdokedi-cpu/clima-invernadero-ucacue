@@ -1,8 +1,8 @@
-# Clima Invernadero UCACUE – Climatología Aplicada
+# InverClima – Monitoreo climático de invernaderos
 
-Herramienta académica de la **Universidad Católica de Cuenca (UCACUE), sede Macas** para **monitorear, analizar, visualizar e interpretar** el microclima del invernadero universitario con datos reales de sensores, con énfasis en el **cultivo de tomate**.
+Aplicación para **monitorear, analizar, visualizar e interpretar** el microclima de un invernadero con datos reales de sensores, con énfasis en el **cultivo de tomate**, y controlar el riego de 4 parcelas con un ESP32.
 
-Actividad: *Resolución de problemas prácticos – Climatología Aplicada.*
+© 2026 Edison Xavier Guzmán Montesdeoca. Todos los derechos reservados (ver `LICENSE`). Originada como proyecto académico de Climatología Aplicada.
 
 ```
 DATOS REALES DE SENSORES → ALMACENAMIENTO → VALIDACIÓN → CÁLCULOS → GRÁFICOS
@@ -39,11 +39,9 @@ npm run preview    # probar la versión de producción
 
 **APK (Capacitor):** requiere Android Studio y JDK 17.
 
-```bash
-npm install @capacitor/core @capacitor/cli @capacitor/android
-npx cap init "Clima UCACUE" ec.edu.ucacue.climainvernadero --web-dir dist
-npm run build && npx cap add android && npx cap open android
-```
+El APK se compila solo en GitHub Actions (pestaña **Actions → Compilar APK**) y queda en **Releases**. Si existen los secretos de firma (`ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`) se genera un APK *release* firmado; si no, uno de depuración.
+
+Para compilar en la PC: `npm run android:sync` y luego `npx cap open android`.
 
 ## Módulos
 

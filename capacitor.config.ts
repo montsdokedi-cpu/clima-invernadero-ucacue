@@ -1,8 +1,8 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'ec.edu.ucacue.climainvernadero',
-  appName: 'Clima UCACUE',
+  appId: 'com.xavierguzman.inverclima',
+  appName: 'InverClima',
   webDir: 'dist',
   // Se mantiene el esquema https por defecto para no perder los datos ya guardados en el teléfono.
   android: { backgroundColor: '#f4f7f3' },

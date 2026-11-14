@@ -10,10 +10,10 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['icon.svg', 'apple-touch-icon.png'],
       manifest: {
-        name: 'Clima Invernadero UCACUE – Climatología Aplicada',
-        short_name: 'Clima UCACUE',
+        name: 'InverClima – Monitoreo climático de invernaderos',
+        short_name: 'InverClima',
         description:
-          'Monitoreo, análisis e interpretación del microclima del invernadero de la UCACUE (sede Macas) para el cultivo de tomate.',
+          'Monitoreo, análisis e interpretación del microclima del invernadero para el cultivo de tomate.',
         lang: 'es-EC',
         theme_color: '#2f7d4a',
         background_color: '#f4f7f3',

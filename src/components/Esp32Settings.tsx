@@ -11,6 +11,13 @@ import { useToast } from '../state/Toast';
 import { Esp32Badge } from './irrigation';
 import { Field } from './ui';
 
+/** Clave aleatoria de 20 caracteres (sin letras confusas como O/0 o l/1). */
+function generateKey(): string {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+  const bytes = crypto.getRandomValues(new Uint8Array(20));
+  return Array.from(bytes, (b) => chars[b % chars.length]).join('');
+}
+
 type NumKey = 'port' | 'pollSeconds' | 'saveEveryMin' | 'offlineSeconds' | 'commandTimeoutSeconds' | 'sensorStaleMinutes';
 
 /** Configuración de la conexión Wi-Fi con el ESP32. No asume IP, protocolo ni hardware definitivos. */
@@ -21,6 +28,7 @@ export function Esp32SettingsCard() {
   const [f, setF] = useState<Esp32Settings>(settings.esp32);
   const [nums, setNums] = useState<Record<NumKey, string>>({} as Record<NumKey, string>);
   const [testing, setTesting] = useState(false);
+  const [showKey, setShowKey] = useState(false);
 
   useEffect(() => {
     setF(settings.esp32);
@@ -42,6 +50,9 @@ export function Esp32SettingsCard() {
       (parsed as Record<string, number>)[k] = n;
     }
     if (f.transport === 'http' && !f.host.trim()) return toast('Para la conexión Wi-Fi (HTTP) indica la dirección IP del ESP32.', 'error');
+    const key = (f.apiKey ?? '').trim();
+    if (f.transport === 'http' && key.length < 12) return toast('Por seguridad, la clave secreta del ESP32 debe tener al menos 12 caracteres. Usa «Generar clave».', 'error');
+    if (/[^\x21-\x7e]/.test(key)) return toast('La clave solo puede tener letras, números y símbolos, sin espacios ni tildes.', 'error');
     await saveSettings({ esp32: { ...f, ...parsed } });
     toast('Conexión con el ESP32 guardada.');
   };
@@ -69,6 +80,15 @@ export function Esp32SettingsCard() {
         <Field label="Dirección IP del ESP32" htmlFor="esp-host" hint="Ej.: 192.168.1.50 (pendiente de definir)">
           <input id="esp-host" type="text" inputMode="url" value={f.host} placeholder="Sin definir" onChange={(e) => setF({ ...f, host: e.target.value })} />
         </Field>
+        <div className="span-all">
+        <Field label="Clave secreta del ESP32" htmlFor="esp-key" hint="Debe ser igual a la clave programada en el ESP32. Sin ella, el ESP32 no obedece.">
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, minWidth: 0 }}>
+            <input id="esp-key" type={showKey ? 'text' : 'password'} autoComplete="off" value={f.apiKey ?? ''} placeholder="Mínimo 12 caracteres" onChange={(e) => setF({ ...f, apiKey: e.target.value })} style={{ flex: '1 1 200px', minWidth: 0 }} />
+            <button type="button" className="btn btn-ghost btn-sm" onClick={() => setShowKey(!showKey)}>{showKey ? 'Ocultar' : 'Ver'}</button>
+            <button type="button" className="btn btn-secondary btn-sm" onClick={() => { setF({ ...f, apiKey: generateKey() }); setShowKey(true); }}>Generar clave</button>
+          </div>
+        </Field>
+        </div>
         {num('port', 'Puerto', 'Vacío = 80')}
         {num('pollSeconds', 'Consultar cada (s)')}
         {num('saveEveryMin', 'Guardar en histórico cada (min)', 'También se guarda en cada cambio de válvula')}

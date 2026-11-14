@@ -1,5 +1,5 @@
 -- ============================================================================
--- CLIMA INVERNADERO UCACUE – Modelo relacional (PostgreSQL) · versión 2
+-- INVERCLIMA – Modelo relacional (PostgreSQL) · versión 2
 -- ----------------------------------------------------------------------------
 -- La aplicación guarda los datos en el dispositivo (IndexedDB) con estas mismas
 -- entidades. Este script sirve para montar un servidor central que sincronice

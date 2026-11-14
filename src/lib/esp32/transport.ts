@@ -27,6 +27,7 @@ async function request(url: string, init: RequestInit, timeoutMs: number): Promi
   const timer = setTimeout(() => ctrl.abort(), timeoutMs);
   try {
     const res = await fetch(url, { ...init, signal: ctrl.signal, cache: 'no-store' });
+    if (res.status === 401 || res.status === 403) throw new Error('El ESP32 rechazó la clave secreta. Revisa que sea la misma en la app y en el ESP32.');
     if (!res.ok) throw new Error(`El ESP32 respondió con el código ${res.status}.`);
     const text = await res.text();
     try {
@@ -55,22 +56,30 @@ export class HttpTransport implements Esp32Transport {
     if (!this.address) throw new Error('Configura la dirección IP del ESP32 en Configuración.');
     return `${this.address}${path(p)}`;
   }
+  /** Cabeceras comunes: la clave secreta permite que el ESP32 rechace órdenes de otros equipos de la red. */
+  private headers(json = false): Record<string, string> {
+    const h: Record<string, string> = {};
+    if (json) h['Content-Type'] = 'application/json';
+    const key = (this.s.apiKey ?? '').trim();
+    if (key) h['X-Clave'] = key;
+    return h;
+  }
   getReading() {
-    return request(this.url(this.s.dataPath), { method: 'GET' }, this.timeout());
+    return request(this.url(this.s.dataPath), { method: 'GET', headers: this.headers() }, this.timeout());
   }
   setValve(n: ParcelId, open: boolean) {
-    return request(this.url(this.s.commandPath), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(valveCommand(n, open)) }, this.timeout());
+    return request(this.url(this.s.commandPath), { method: 'POST', headers: this.headers(true), body: JSON.stringify(valveCommand(n, open)) }, this.timeout());
   }
   sendConfig(parcels: Parcel[]) {
-    return request(this.url(this.s.configPath), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(configPayload(parcels)) }, this.timeout());
+    return request(this.url(this.s.configPath), { method: 'POST', headers: this.headers(true), body: JSON.stringify(configPayload(parcels)) }, this.timeout());
   }
   async ping() {
     const t0 = performance.now();
     let info: unknown;
     try {
-      info = await request(this.url(this.s.statusPath), { method: 'GET' }, this.timeout());
+      info = await request(this.url(this.s.statusPath), { method: 'GET', headers: this.headers() }, this.timeout());
     } catch {
-      info = await request(this.url(this.s.dataPath), { method: 'GET' }, this.timeout());
+      info = await request(this.url(this.s.dataPath), { method: 'GET', headers: this.headers() }, this.timeout());
     }
     return { ok: true, ms: Math.round(performance.now() - t0), info };
   }

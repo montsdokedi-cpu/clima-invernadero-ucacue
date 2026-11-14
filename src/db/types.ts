@@ -1,4 +1,4 @@
-// Modelo de datos de Clima Invernadero UCACUE.
+// Modelo de datos de InverClima.
 // Cada registro identifica su ORIGEN (sensor, manual, importado, demostración) y su
 // ESTADO DE VALIDACIÓN. Todas las entidades llevan `isDemo` para que los datos
 // simulados nunca se mezclen con los datos reales usados en el análisis académico.
@@ -101,7 +101,7 @@ export const VALIDATION_LABELS: Record<DataValidation, string> = {
 
 export interface ClimateRecord {
   id?: number;
-  date: string; // YYYY-MM-DD (hora local de Macas)
+  date: string; // YYYY-MM-DD (hora local)
   time: string; // HH:mm
   ts: number;
   greenhouseId: number;
@@ -305,4 +305,6 @@ export interface Esp32Settings {
   /** Dónde se ejecutan los modos automáticos */
   controlLogic: 'esp32' | 'app';
   autoConnect: boolean;
+  /** Clave secreta compartida con el ESP32: se envía en la cabecera X-Clave en cada petición */
+  apiKey: string;
 }

@@ -98,10 +98,61 @@ Referencia en la app: `src/lib/irrigation.ts → decide()`.
 
 En todos los modos automáticos, si `duracion_maxima_min` tiene valor, la válvula se cierra al cumplirse ese tiempo (límite de seguridad).
 
+## Seguridad: clave secreta (obligatoria)
+
+Las electroválvulas son equipos físicos: el ESP32 **no debe obedecer a cualquier equipo de la red Wi-Fi**. Por eso la app envía en **todas** las peticiones la cabecera:
+
+```
+X-Clave: <clave secreta>
+```
+
+La clave se escribe (o se genera) en la app en **Configuración → Conexión con el ESP32 → Clave secreta** y debe ser **idéntica** a la programada en el firmware.
+
+Reglas para el firmware:
+
+1. Si la cabecera `X-Clave` falta o no coincide, responder **401** y no hacer nada (no leer, no abrir válvulas, no cambiar la configuración).
+2. Responder a las peticiones `OPTIONS` (CORS) con `Access-Control-Allow-Origin: *`, `Access-Control-Allow-Headers: Content-Type, X-Clave` y `Access-Control-Allow-Methods: GET, POST, OPTIONS`. Lo necesita la versión web (PWA); el APK no.
+3. Guardar la clave en NVS o en una constante del firmware, nunca en un repositorio público.
+4. El Wi-Fi del invernadero debe tener contraseña WPA2/WPA3 fuerte y no compartirse con visitantes.
+
+Ejemplo (Arduino `WebServer`):
+
+```cpp
+const char* CLAVE = "la-misma-clave-de-la-app";
+
+bool autorizado() {
+  if (server.method() == HTTP_OPTIONS) return true;
+  return server.header("X-Clave") == CLAVE;
+}
+
+void responderOpciones() {
+  server.sendHeader("Access-Control-Allow-Origin", "*");
+  server.sendHeader("Access-Control-Allow-Headers", "Content-Type, X-Clave");
+  server.sendHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  server.send(204);
+}
+
+void manejarValvula() {
+  server.sendHeader("Access-Control-Allow-Origin", "*");
+  if (!autorizado()) { server.send(401, "application/json", "{\"error\":\"clave\"}"); return; }
+  // ... leer el JSON y mover la válvula ...
+}
+
+void setup() {
+  const char* cabeceras[] = {"X-Clave"};
+  server.collectHeaders(cabeceras, 1);           // sin esto, server.header() devuelve vacío
+  server.on("/valvula", HTTP_OPTIONS, responderOpciones);
+  server.on("/valvula", HTTP_POST, manejarValvula);
+  // ... igual para /datos, /config y /estado ...
+}
+```
+
+La app muestra «El ESP32 rechazó la clave secreta» cuando recibe 401 o 403.
+
 ## Pendiente para la conexión física
 
 1. **Hardware:** modelo de ESP32, sensores ambientales y de suelo (y su calibración a %), relés o MOSFET, electroválvulas (voltaje y consumo), fuente de alimentación y pines GPIO.
-2. **Firmware:** conexión Wi-Fi, servidor HTTP con las 4 rutas anteriores, lectura de sensores, control de relés, reglas de los 4 modos y guardado de la configuración en NVS.
+2. **Firmware:** conexión Wi-Fi, servidor HTTP con las 4 rutas anteriores protegidas con la clave secreta (ver «Seguridad»), lectura de sensores, control de relés, reglas de los 4 modos y guardado de la configuración en NVS.
 3. **Red:** IP fija del ESP32 (reserva DHCP en el router o IP estática), mismo Wi-Fi que el celular. Luego se configura en la app: IP → Guardar → Probar conexión.
 4. **Seguridad eléctrica:** en el arranque y ante pérdida de Wi-Fi, estado seguro de las válvulas (normalmente cerradas).
 5. **Calibración:** definir con el docente los umbrales de cada parcela en **Riego y parcelas → Configuración de umbrales**.

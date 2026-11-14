@@ -50,6 +50,6 @@ export function downloadTemplate(format: 'csv' | 'xlsx') {
     ['14/09/2026', '08:30', 23.4, 75, 'SHT31-01', 'Tomate', 21.2, 64, ''],
     ['14/09/2026', '09:00', 24.6, 71, 'SHT31-01', 'Tomate', 21.5, 64, 'Cortinas laterales abiertas'],
   ];
-  if (format === 'csv') downloadCSV(rows, 'plantilla_sensores_invernadero_ucacue.csv');
-  else downloadXLSX([{ name: 'Registros', rows }], 'plantilla_sensores_invernadero_ucacue.xlsx');
+  if (format === 'csv') downloadCSV(rows, 'plantilla_sensores_inverclima.csv');
+  else downloadXLSX([{ name: 'Registros', rows }], 'plantilla_sensores_inverclima.xlsx');
 }

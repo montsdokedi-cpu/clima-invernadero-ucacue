@@ -54,7 +54,7 @@ export async function seedDemoData(days = 45) {
     const ghId = (await db.greenhouses.add({
       code: 'DEMO-01',
       name: 'Invernadero de demostración',
-      location: 'Datos simulados (referencia: clima de Macas, Morona Santiago)',
+      location: 'Datos simulados (referencia: clima amazónico de Ecuador)',
       areaM2: 200,
       coverType: 'Polietileno',
       notes: 'Datos de demostración. No corresponden a mediciones reales.',
@@ -140,7 +140,7 @@ export async function seedDemoData(days = 45) {
         const nightCool = h > 20 ? (h - 20) * 0.35 : h < 6 ? (6 - h) * -0.05 + 1.2 : 0;
         let airTemp = tNight + tBoost * phase - nightCool * 0.6 + noise(0.45);
         if (rand() < 0.006 && h >= 10 && h <= 16) airTemp -= 5.5 + rand() * 2; // nube/lluvia repentina
-        // HR nocturna alta (típica de Macas) sin saturar; lecturas de 100 % solo ocasionales (sensor mojado)
+        // HR nocturna alta (típica de la Amazonía) sin saturar; lecturas de 100 % solo ocasionales (sensor mojado)
         const relHumidity = rand() < 0.002 ? 100 : Math.min(98, Math.max(40, 96 - (airTemp - tNight) * 3.2 + (1 - sunny) * 4 + (rainy ? 3 : 0) + noise(2.2)));
         soil += (airTemp - soil) * 0.035 + noise(0.05);
         soilM = Math.min(88, Math.max(40, soilM - phase * 0.18 + (slot === 16 ? 9 : 0) + (rainy ? 0.05 : 0) + noise(0.3)));

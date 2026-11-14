@@ -44,21 +44,34 @@ jobs:
       - name: Copiar la app web al proyecto Android
         run: npx cap sync android
 
+      # Con los secretos de firma se genera un APK «release» firmado con la clave propia.
+      # Sin ellos se genera uno de depuración (solo para pruebas).
       - name: Compilar el APK
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
           chmod +x android/gradlew
-          cd android
-          ./gradlew assembleDebug --no-daemon
-
-      - name: Renombrar el APK
-        run: |
           mkdir -p apk
-          cp android/app/build/outputs/apk/debug/app-debug.apk "apk/Clima-Invernadero-UCACUE-v${{ github.run_number }}.apk"
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/inverclima.jks"
+            export ANDROID_KEYSTORE_FILE="$RUNNER_TEMP/inverclima.jks"
+            (cd android && ./gradlew assembleRelease --no-daemon)
+            cp android/app/build/outputs/apk/release/app-release.apk "apk/InverClima-v${{ github.run_number }}.apk"
+            rm -f "$RUNNER_TEMP/inverclima.jks"
+            echo "FIRMA=propia" >> "$GITHUB_ENV"
+          else
+            (cd android && ./gradlew assembleDebug --no-daemon)
+            cp android/app/build/outputs/apk/debug/app-debug.apk "apk/InverClima-v${{ github.run_number }}-prueba.apk"
+            echo "FIRMA=depuracion" >> "$GITHUB_ENV"
+          fi
 
       - name: Publicar el APK como archivo descargable
         uses: actions/upload-artifact@v4
         with:
-          name: APK-Clima-Invernadero-UCACUE
+          name: APK-InverClima
           path: apk/*.apk
           retention-days: 90
 
@@ -67,5 +80,5 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release create "apk-v${{ github.run_number }}" apk/*.apk \
-            --title "Clima Invernadero UCACUE · APK v${{ github.run_number }}" \
-            --notes "APK de prueba (firma de depuración) para instalar en Android. Antes de instalar, activa «Instalar aplicaciones desconocidas» para el navegador o el gestor de archivos."
+            --title "InverClima · APK v${{ github.run_number }}" \
+            --notes "APK de InverClima (firma: ${FIRMA}). Antes de instalar, activa «Instalar aplicaciones desconocidas» para el navegador o el gestor de archivos."

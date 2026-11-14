@@ -67,7 +67,7 @@ export default function Reports() {
       } else if (format === 'xlsx') {
         const info = [
           ['Resolución de problemas prácticos – Climatología Aplicada'],
-          [isDemo ? 'DATOS DE DEMOSTRACIÓN — valores simulados, no corresponden al invernadero de la UCACUE' : 'Datos reales del invernadero'],
+          [isDemo ? 'DATOS DE DEMOSTRACIÓN — valores simulados, no corresponden a mediciones reales' : 'Datos reales del invernadero'],
           [],
           ['Título del estudio', title],
           ['Institución', settings.institution],

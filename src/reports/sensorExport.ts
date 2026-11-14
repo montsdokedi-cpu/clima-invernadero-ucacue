@@ -69,7 +69,7 @@ export function valveEventRows(events: ValveEvent[]): Cell[][] {
 export function exportSystemHistory(opts: { records: ClimateRecord[]; events: ValveEvent[]; columns: ExportColumn[]; from?: string; to?: string; parcel?: ParcelId | null; isDemo: boolean; all?: boolean }) {
   const records = [...opts.records].sort((a, b) => a.ts - b.ts);
   const info: Cell[][] = [
-    ['Histórico del sistema de riego – Invernadero UCACUE'],
+    ['Histórico del sistema de riego – InverClima'],
     [opts.isDemo ? 'DATOS DE DEMOSTRACIÓN — valores simulados' : 'Datos reales'],
     [],
     ['Periodo', opts.all ? 'Todo el histórico' : `${opts.from ? fmtDate(opts.from) : 'inicio'} al ${opts.to ? fmtDate(opts.to) : 'hoy'}`],

@@ -104,7 +104,7 @@ export default function Dashboard() {
   if (!last) {
     return (
       <>
-        <PageHeader title="Monitoreo del cultivo de tomate" description="Invernadero UCACUE · Climatología aplicada" icon={<Leaf size={22} />} />
+        <PageHeader title="Monitoreo del cultivo de tomate" description="InverClima · Climatología aplicada" icon={<Leaf size={22} />} />
         <SystemOverview />
         <EmptyState icon={<Thermometer size={30} />} title="Aún no hay datos del invernadero">
           {isDemo

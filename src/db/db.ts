@@ -79,12 +79,13 @@ export const DEFAULT_ESP32: Esp32Settings = {
   sensorStaleMinutes: 10,
   controlLogic: 'esp32',
   autoConnect: true,
+  apiKey: '',
 };
 
 export const DEFAULT_SETTINGS: AppSettings = {
   id: 'app',
-  institution: 'Universidad Católica de Cuenca (UCACUE)',
-  campus: 'Sede Macas',
+  institution: '',
+  campus: '',
   dataMode: 'real',
   sourceFilter: ['sensor', 'manual', 'importado'],
   defaultGreenhouseId: null,
@@ -114,7 +115,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   radiationUnit: 'W/m²',
   windUnit: 'm/s',
   studyTitle:
-    'Análisis de las condiciones microclimáticas del invernadero de la UCACUE mediante datos reales de sensores para el monitoreo del cultivo de tomate',
+    'Análisis de las condiciones microclimáticas del invernadero mediante datos reales de sensores para el monitoreo del cultivo de tomate',
   studyProblem:
     'Determinar si las condiciones de temperatura y humedad relativa registradas dentro del invernadero son adecuadas para el desarrollo del cultivo de tomate e identificar periodos de posible estrés climático.',
   referenceSource: 'Rangos referenciales configurables según variedad, etapa fenológica y bibliografía utilizada.',
@@ -198,16 +199,14 @@ export function ensureBaseData() {
 async function createBaseData() {
   if (!(await db.settings.get('app'))) await db.settings.put(DEFAULT_SETTINGS);
   const s = await getSettings();
-  // Instalaciones previas con el nombre antiguo de la institución
-  if (s.institution === 'Universidad Católica de Cuenca') await saveSettings({ institution: DEFAULT_SETTINGS.institution });
 
   let ghId = s.defaultGreenhouseId;
   const realGreenhouses = await db.greenhouses.filter((g) => !g.isDemo).toArray();
   if (realGreenhouses.length === 0) {
     ghId = (await db.greenhouses.add({
-      code: 'INV-UCACUE-01',
-      name: 'Invernadero UCACUE Macas',
-      location: 'Universidad Católica de Cuenca, sede Macas – Morona Santiago',
+      code: 'INV-01',
+      name: 'Invernadero principal',
+      location: '',
       coverType: 'Polietileno',
       isDemo: false,
       createdAt: Date.now(),

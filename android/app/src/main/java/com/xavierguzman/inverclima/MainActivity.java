@@ -1,4 +1,4 @@
-package ec.edu.ucacue.climainvernadero;
+package com.xavierguzman.inverclima;
 
 import com.getcapacitor.BridgeActivity;
 

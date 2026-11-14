@@ -6,6 +6,7 @@ import { db, DEFAULT_SETTINGS, getSettings, saveSettings, tomatoThresholds } fro
 import { hasDemoData, removeDemoData, seedDemoData } from '../db/seed';
 import { REAL_SOURCES, SOURCE_LABELS, TOMATO_STAGES, type AppSettings, type ClimateThreshold, type Greenhouse, type OptionalField, type Role, type User } from '../db/types';
 import { todayISO } from '../lib/dates';
+import { BACKUP_APP_NAME, checkBackup, MAX_BACKUP_BYTES } from '../lib/backup';
 import { downloadBlob } from '../lib/download';
 import { parseNumber } from '../lib/validation';
 import { VARIABLES } from '../lib/variables';
@@ -104,33 +105,41 @@ export default function SettingsPage() {
 
   const exportBackup = async () => {
     const dump = {
-      app: 'Clima Invernadero UCC', version: 2, exportedAt: new Date().toISOString(),
+      app: BACKUP_APP_NAME, version: 3, exportedAt: new Date().toISOString(),
       settings: await getSettings(), users: await db.users.toArray(), greenhouses: await db.greenhouses.toArray(), crops: await db.crops.toArray(),
       climateRecords: await db.climateRecords.toArray(), climateThresholds: await db.climateThresholds.toArray(), reports: await db.reports.toArray(),
       parcels: await db.parcels.toArray(), valveEvents: await db.valveEvents.toArray(),
     };
-    downloadBlob(new Blob([JSON.stringify(dump)], { type: 'application/json' }), `respaldo_clima_ucacue_${todayISO()}.json`);
+    downloadBlob(new Blob([JSON.stringify(dump)], { type: 'application/json' }), `respaldo_inverclima_${todayISO()}.json`);
     toast('Respaldo descargado.');
   };
 
   const restoreBackup = async (file: File) => {
     try {
-      const dump = JSON.parse(await file.text());
-      if (dump.app !== 'Clima Invernadero UCC' || !Array.isArray(dump.climateRecords)) throw new Error('El archivo no es un respaldo de esta aplicación.');
+      if (file.size > MAX_BACKUP_BYTES) throw new Error('El archivo es demasiado grande para ser un respaldo.');
+      let raw: unknown;
+      try {
+        raw = JSON.parse(await file.text());
+      } catch {
+        throw new Error('El archivo no es un respaldo válido (JSON dañado).');
+      }
+      // Se revisa todo el archivo ANTES de borrar nada: si algo falla, los datos actuales quedan intactos.
+      const { settings: s, tables: d } = checkBackup(raw);
+      const records = d.climateRecords ?? [];
       await db.transaction('rw', [db.users, db.greenhouses, db.crops, db.climateRecords, db.climateThresholds, db.reports, db.settings, db.parcels, db.valveEvents], async () => {
         for (const t of [db.users, db.greenhouses, db.crops, db.climateRecords, db.climateThresholds, db.reports]) await t.clear();
         // Respaldos anteriores a la v3 no traen parcelas: se conservan las actuales
-        if (Array.isArray(dump.parcels)) { await db.parcels.clear(); await db.parcels.bulkPut(dump.parcels); }
-        if (Array.isArray(dump.valveEvents)) { await db.valveEvents.clear(); await db.valveEvents.bulkPut(dump.valveEvents); }
-        await db.users.bulkPut(dump.users ?? []);
-        await db.greenhouses.bulkPut(dump.greenhouses ?? []);
-        await db.crops.bulkPut(dump.crops ?? []);
-        await db.climateRecords.bulkPut(dump.climateRecords.map((r: { validation?: string }) => ({ validation: 'valido', ...r })));
-        await db.climateThresholds.bulkPut(dump.climateThresholds ?? []);
-        await db.reports.bulkPut(dump.reports ?? []);
-        if (dump.settings) await db.settings.put({ ...dump.settings, id: 'app' });
+        if (d.parcels) { await db.parcels.clear(); await db.parcels.bulkPut(d.parcels as never[]); }
+        if (d.valveEvents) { await db.valveEvents.clear(); await db.valveEvents.bulkPut(d.valveEvents as never[]); }
+        await db.users.bulkPut((d.users ?? []) as never[]);
+        await db.greenhouses.bulkPut((d.greenhouses ?? []) as never[]);
+        await db.crops.bulkPut((d.crops ?? []) as never[]);
+        await db.climateRecords.bulkPut(records.map((r) => ({ validation: 'valido', ...r })) as never[]);
+        await db.climateThresholds.bulkPut((d.climateThresholds ?? []) as never[]);
+        await db.reports.bulkPut((d.reports ?? []) as never[]);
+        if (s) await db.settings.put({ ...(await getSettings()), ...s, id: 'app' });
       });
-      toast(`Respaldo restaurado (${dump.climateRecords.length} registros).`);
+      toast(`Respaldo restaurado (${records.length} registros).`);
     } catch (e) {
       toast(`No se pudo restaurar: ${(e as Error).message}`, 'error');
     }
@@ -246,7 +255,7 @@ export default function SettingsPage() {
           <section className="card card-pad">
             <h3 className="card-title">Institución y responsable</h3>
             <div className="form-grid">
-              <Field label="Universidad" htmlFor="inst"><input id="inst" type="text" value={general.institution} onChange={(e) => setGeneral({ ...general, institution: e.target.value })} /></Field>
+              <Field label="Institución" htmlFor="inst"><input id="inst" type="text" value={general.institution} onChange={(e) => setGeneral({ ...general, institution: e.target.value })} /></Field>
               <Field label="Sede" htmlFor="campus"><input id="campus" type="text" value={general.campus} onChange={(e) => setGeneral({ ...general, campus: e.target.value })} /></Field>
               <Field label="Responsable por defecto" htmlFor="resp"><input id="resp" type="text" value={general.defaultResponsible} onChange={(e) => setGeneral({ ...general, defaultResponsible: e.target.value })} /></Field>
               <Field label="Invernadero por defecto" htmlFor="def-gh">
@@ -333,7 +342,7 @@ export default function SettingsPage() {
           <section className="card card-pad">
             <h3 className="card-title">Acerca de</h3>
             <p className="small muted">
-              Clima Invernadero UCACUE v3.0 · Herramienta de Climatología Aplicada: monitoreo, análisis e interpretación del microclima para el cultivo de tomate, y control de las 4 electroválvulas de riego a través del ESP32. No diagnostica enfermedades.
+              InverClima v3.1 · Herramienta de Climatología Aplicada: monitoreo, análisis e interpretación del microclima para el cultivo de tomate, y control de las 4 electroválvulas de riego a través del ESP32. No diagnostica enfermedades.
             </p>
           </section>
         </div>
@@ -342,7 +351,7 @@ export default function SettingsPage() {
       {gh && (
         <Modal title={gh.id ? 'Editar invernadero' : 'Nuevo invernadero'} onClose={() => setGh(null)} footer={<><button className="btn btn-ghost" onClick={() => setGh(null)}>Cancelar</button><button className="btn btn-primary" onClick={saveGh}>Guardar</button></>}>
           <div className="form-grid">
-            <Field label="Código" htmlFor="gh-code" required><input id="gh-code" type="text" value={gh.code ?? ''} onChange={(e) => setGh({ ...gh, code: e.target.value })} placeholder="INV-UCACUE-02" /></Field>
+            <Field label="Código" htmlFor="gh-code" required><input id="gh-code" type="text" value={gh.code ?? ''} onChange={(e) => setGh({ ...gh, code: e.target.value })} placeholder="INV-02" /></Field>
             <Field label="Nombre" htmlFor="gh-name" required><input id="gh-name" type="text" value={gh.name ?? ''} onChange={(e) => setGh({ ...gh, name: e.target.value })} /></Field>
             <Field label="Ubicación" htmlFor="gh-loc"><input id="gh-loc" type="text" value={gh.location ?? ''} onChange={(e) => setGh({ ...gh, location: e.target.value })} /></Field>
             <Field label="Área (m²)" htmlFor="gh-area"><input id="gh-area" type="text" inputMode="decimal" value={gh.areaM2 ?? ''} onChange={(e) => setGh({ ...gh, areaM2: parseNumber(e.target.value) })} /></Field>
